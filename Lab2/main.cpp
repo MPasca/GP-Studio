@@ -53,12 +53,14 @@ double prevX, prevY;
 double ogX, ogY;
 
 // models
+gps::Model3D door;
 gps::Model3D teapot;
 GLfloat angle;
 
 // shaders
 gps::Shader myBasicShader;
 gps::Shader skyBoxShader;
+gps::Shader doorShader;
 
 // skybox
 gps::SkyBox skyBox;
@@ -123,9 +125,9 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	//TODO
 	float yaw, pitch;
 
-	yaw = (prevY - ypos) * 0.001f;
+	yaw = (prevY - ypos) * 0.01f;
 
-	pitch = (xpos - prevX) * 0.001f;	// x axis - up, down
+	pitch = (xpos - prevX) * 0.01f;	// x axis - up, down
 
 	myCamera.rotate(yaw, pitch);
 	view = myCamera.getViewMatrix();
@@ -136,6 +138,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 void processMovement() {
+	/*
 	if (pressedKeys[GLFW_KEY_Q]) {
 		angleY -= 1.0f;
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -147,6 +150,7 @@ void processMovement() {
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 	}
+	*/
 
 	if (pressedKeys[GLFW_KEY_W]) {
 		myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
@@ -215,76 +219,68 @@ void initOpenGLState() {
 }
 
 void initModels() {
-    teapot.LoadModel("models/teapot/teapot20segUT.obj");
+	door.LoadModel("models/bathroom_door/bathroom_door.obj");
 }
 
 void initShaders() {
-	myBasicShader.loadShader(
-        "shaders/basic.vert",
-        "shaders/basic.frag");
+	//myBasicShader.loadShader("shaders/basic.vert", "shaders/basic.frag");
+	doorShader.loadShader("shaders/doorShader.vert", "shaders/doorShader.frag");
+	doorShader.useShaderProgram();
 }
 
 void initUniforms() {
-	myBasicShader.useShaderProgram();
-
-    // create model matrix for teapot
     model = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
-	modelLoc = glGetUniformLocation(myBasicShader.shaderProgram, "model");
+	model = glm::translate(model, glm::vec3(0, -1.5, 0));
+	modelLoc = glGetUniformLocation(doorShader.shaderProgram, "model");
 
 	// get view matrix for current camera
 	view = myCamera.getViewMatrix();
-	viewLoc = glGetUniformLocation(myBasicShader.shaderProgram, "view");
+	viewLoc = glGetUniformLocation(doorShader.shaderProgram, "view");
 	// send view matrix to shader
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
     // compute normal matrix for teapot
     normalMatrix = glm::mat3(glm::inverseTranspose(view*model));
-	normalMatrixLoc = glGetUniformLocation(myBasicShader.shaderProgram, "normalMatrix");
+	normalMatrixLoc = glGetUniformLocation(doorShader.shaderProgram, "normalMatrix");
 
 	// create projection matrix
 	projection = glm::perspective(glm::radians(45.0f),
                                (float)myWindow.getWindowDimensions().width / (float)myWindow.getWindowDimensions().height,
                                0.1f, 20.0f);
-	projectionLoc = glGetUniformLocation(myBasicShader.shaderProgram, "projection");
+	projectionLoc = glGetUniformLocation(doorShader.shaderProgram, "projection");
 	// send projection matrix to shader
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));	
 
 	//set the light direction (direction towards the light)
 	lightDir = glm::vec3(0.0f, 1.0f, 1.0f);
-	lightDirLoc = glGetUniformLocation(myBasicShader.shaderProgram, "lightDir");
+	lightDirLoc = glGetUniformLocation(doorShader.shaderProgram, "lightDir");
 	// send light dir to shader
 	glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDir));
 
 	//set light color
 	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); //white light
-	lightColorLoc = glGetUniformLocation(myBasicShader.shaderProgram, "lightColor");
+	lightColorLoc = glGetUniformLocation(doorShader.shaderProgram, "lightColor");
 	// send light color to shader
 	glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
 }
 
-void renderTeapot(gps::Shader shader) {
-    // select active shader program
-    shader.useShaderProgram();
+void renderDoor(gps::Shader shader) {
+	shader.useShaderProgram();
 
-    //send teapot model matrix data to shader
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-    //send teapot normal matrix data to shader
-    glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-    // draw teapot
-    teapot.Draw(shader);
-
-	//skyBox.Draw(skyBoxShader, view, projection);
+	door.Draw(shader);
 }
 
 void renderScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	
 	//render the scene
 
-	// render the teapot
-	renderTeapot(myBasicShader);
+	renderDoor(doorShader);
+	//skyBox.Draw(skyBoxShader, view, projection);
 
 }
 
