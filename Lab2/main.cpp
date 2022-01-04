@@ -7,15 +7,18 @@
 #include "D:/Faculta/An 3/Sem 1/PG/glm/gtc/matrix_transform.hpp"    //glm extension for generating common transformation matrices
 #include "D:/Faculta/An 3/Sem 1/PG/glm/gtc/matrix_inverse.hpp"      //glm extension for computing inverse matrices
 #include "D:/Faculta/An 3/Sem 1/PG/glm/gtc/type_ptr.hpp"            //glm extension for accessing the internal data structure of glm types
+
 #include "Window.h"
 #include "Shader.hpp"
 #include "Camera.hpp"
 #include "Model3D.hpp"
 
 #include <iostream>
+#include "SkyBox.hpp"
 
 // window
 gps::Window myWindow;
+float ratio;
 
 // matrices
 glm::mat4 model;
@@ -55,6 +58,11 @@ GLfloat angle;
 
 // shaders
 gps::Shader myBasicShader;
+gps::Shader skyBoxShader;
+
+// skybox
+gps::SkyBox skyBox;
+std::vector<const GLchar*> faces;
 
 GLenum glCheckError_(const char *file, int line)
 {
@@ -91,8 +99,10 @@ GLenum glCheckError_(const char *file, int line)
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
 void windowResizeCallback(GLFWwindow* window, int width, int height) {
-	fprintf(stdout, "Window resized! New width: %d , and height: %d\n", width, height);
+	//fprintf(stdout, "Window resized! New width: %d , and height: %d\n", width, height);
 	//TODO
+	//width = height * ratio;
+	glViewport(0, 0, width, height);
 }
 
 void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mode) {
@@ -176,7 +186,7 @@ void processMovement() {
 }
 
 void initOpenGLWindow() {
-    myWindow.Create(1024, 768, "OpenGL Project Core");
+    myWindow.Create(1024, 768, "Final Project");
 }
 
 void setWindowCallbacks() {
@@ -188,10 +198,14 @@ void setWindowCallbacks() {
 
 void initOpenGLState() {
 	glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
+
 	glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
+	ratio = myWindow.getWindowDimensions().width/ myWindow.getWindowDimensions().height;
+
 	ogX = myWindow.getWindowDimensions().width / 2;
 	ogY = myWindow.getWindowDimensions().height / 2;
 	prevX = ogX, prevY = ogY;
+
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -260,6 +274,8 @@ void renderTeapot(gps::Shader shader) {
 
     // draw teapot
     teapot.Draw(shader);
+
+	//skyBox.Draw(skyBoxShader, view, projection);
 }
 
 void renderScene() {
@@ -277,6 +293,27 @@ void cleanup() {
     //cleanup code for your own data
 }
 
+void initSkybox() {
+	faces.push_back("textures/skybox/right.tga");	//
+	faces.push_back("textures/skybox/left.tga");	//	the cube
+	faces.push_back("textures/skybox/top.tga");		//	textures
+	faces.push_back("textures/skybox/bottom.tga");	//	and stuff
+	faces.push_back("textures/skybox/back.tga");	//
+	faces.push_back("textures/skybox/front.tga");	//
+	skyBox.Load(faces);	// loads the faces
+
+	skyBoxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag"); // init the shader
+	skyBoxShader.useShaderProgram();
+
+	view = myCamera.getViewMatrix();	// camera view
+	glUniformMatrix4fv(glGetUniformLocation(skyBoxShader.shaderProgram, "view"), 1, GL_FALSE,
+		glm::value_ptr(view));
+
+	projection = glm::perspective(glm::radians(45.0f), ratio, 0.1f, 1000.0f);
+	glUniformMatrix4fv(glGetUniformLocation(skyBoxShader.shaderProgram, "projection"), 1, GL_FALSE,
+		glm::value_ptr(projection));
+}
+
 int main(int argc, const char * argv[]) {
 
     try {
@@ -286,6 +323,7 @@ int main(int argc, const char * argv[]) {
         return EXIT_FAILURE;
     }
 
+	initSkybox();
     initOpenGLState();
 	initModels();
 	initShaders();
