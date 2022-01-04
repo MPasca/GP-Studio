@@ -54,13 +54,19 @@ double ogX, ogY;
 
 // models
 gps::Model3D door;
-gps::Model3D teapot;
+gps::Model3D book;
+gps::Model3D cerealBox;
+gps::Model3D scene;
+gps::Model3D plant;
 GLfloat angle;
 
 // shaders
-gps::Shader myBasicShader;
 gps::Shader skyBoxShader;
 gps::Shader doorShader;
+gps::Shader plantShader;
+gps::Shader bookShader;
+gps::Shader cerealShader;
+gps::Shader sceneShader;
 
 // skybox
 gps::SkyBox skyBox;
@@ -220,6 +226,10 @@ void initOpenGLState() {
 
 void initModels() {
 	door.LoadModel("models/bathroom_door/bathroom_door.obj");
+	plant.LoadModel("models/plant/plant.obj");
+	cerealBox.LoadModel("models/cereal_box/cereal_box.obj");
+	door.LoadModel("models/book/book.obj");		// problema la cum imi citeste texturile
+	//scene.LoadModel("models/scene/scene.obj", ""); AJUTOR MA UCIDE
 }
 
 void initShaders() {
