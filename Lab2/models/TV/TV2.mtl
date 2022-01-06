@@ -1,0 +1,178 @@
+# Blender MTL File: 'studio.blend'
+# Material Count: 16
+
+newmtl Mat,alu_slat_bott
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat.name_inscription
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_alu_slat_top
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_metal_scratch_b,s,
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_metalscre._potentiometer_6
+Ns 639.847311
+Ka 0.047970 0.047970 0.047970
+Kd 0.800000 0.800000 0.800000
+Ks 0.282288 0.282288 0.282288
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_metalscre.potentiometer_1
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic._knob_1
+Ns 571.756924
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic._potentiometer_4
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic._potentiometer_6
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic.band_switch
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic.knob_2
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic.potentiometer2
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic.potentiometer_1
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic.potentiometer_3
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic.potentiometer__5
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png
+
+newmtl Mat_plastic.power_switch
+Ns 165.306149
+Ka 0.149351 0.149351 0.149351
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details 8000.png

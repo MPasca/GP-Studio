@@ -45,6 +45,8 @@ gps::Camera myCamera(
     glm::vec3(0.0f, 1.0f, 0.0f));
 
 GLfloat cameraSpeed = 0.1f;
+GLfloat ogSpeed = 0.1f;
+GLfloat SPEEDSpeed = 0.5f;
 
 GLboolean pressedKeys[1024];
 float angleY = 0.0f;
@@ -157,6 +159,12 @@ void processMovement() {
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 	}
 	*/
+	if (pressedKeys[GLFW_KEY_LEFT_SHIFT]) {
+		cameraSpeed = SPEEDSpeed;
+	}
+	else {
+		cameraSpeed = ogSpeed;
+	}
 
 	if (pressedKeys[GLFW_KEY_W]) {
 		myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
@@ -182,13 +190,13 @@ void processMovement() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
-	if (pressedKeys[GLFW_KEY_UP]) {
+	if (pressedKeys[GLFW_KEY_SPACE]) {
 		myCamera.move(gps::MOVE_UP, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
-	if (pressedKeys[GLFW_KEY_DOWN]) {
+	if (pressedKeys[GLFW_KEY_LEFT_CONTROL]) {
 		myCamera.move(gps::MOVE_DOWN, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -224,58 +232,102 @@ void initOpenGLState() {
 	glFrontFace(GL_CCW); // GL_CCW for counter clock-wise
 }
 
+void initScene() {
+	scene.LoadModel("models/ground/bathroomGND.obj");
+	scene.LoadModel("models/ground/kitchenGND.obj");
+	scene.LoadModel("models/ground/livingRoomGND.obj");
+	scene.LoadModel("models/brickWalls/brickwalls.obj");
+	scene.LoadModel("models/table/table.obj");
+	scene.LoadModel("models/couch/couch.obj");
+	scene.LoadModel("models/bed/bed.obj");
+	scene.LoadModel("models/bar_stools/bar_stools.obj");
+	scene.LoadModel("models/fridge/fridge.obj");
+	scene.LoadModel("models/kitchen/kitchen.obj");
+	scene.LoadModel("models/oven/oven.obj");
+	scene.LoadModel("models/TV/TV_table.obj");
+	scene.LoadModel("models/TV/TV1.obj");
+	scene.LoadModel("models/TV/TV2.obj");
+	scene.LoadModel("models/TV/TV4.obj");
+	scene.LoadModel("models/TV/TV5.obj");
+	scene.LoadModel("models/TV/TV6.obj");
+	scene.LoadModel("models/walls/walls.obj");
+	scene.LoadModel("models/brickWalls/bar.obj");
+
+}
+
 void initModels() {
 	door.LoadModel("models/bathroom_door/bathroom_door.obj");
-	plant.LoadModel("models/plant/plant.obj");
-	cerealBox.LoadModel("models/cereal_box/cereal_box.obj");
+	door.LoadModel("models/plant/plant.obj");
+	door.LoadModel("models/cereal_box/cereal_box.obj");
 	door.LoadModel("models/book/book.obj");		// problema la cum imi citeste texturile
-	//scene.LoadModel("models/scene/scene.obj", ""); AJUTOR MA UCIDE
+	door.LoadModel("models/TV/TV3_cover.obj");
+
+	initScene();
 }
 
 void initShaders() {
 	//myBasicShader.loadShader("shaders/basic.vert", "shaders/basic.frag");
-	doorShader.loadShader("shaders/doorShader.vert", "shaders/doorShader.frag");
-	doorShader.useShaderProgram();
+	sceneShader.loadShader("shaders/sceneShader.vert", "shaders/sceneShader.frag");
+	sceneShader.useShaderProgram();
 }
 
 void initUniforms() {
     model = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::translate(model, glm::vec3(0, -1.5, 0));
-	modelLoc = glGetUniformLocation(doorShader.shaderProgram, "model");
+	modelLoc = glGetUniformLocation(sceneShader.shaderProgram, "model");
 
 	// get view matrix for current camera
 	view = myCamera.getViewMatrix();
-	viewLoc = glGetUniformLocation(doorShader.shaderProgram, "view");
+	viewLoc = glGetUniformLocation(sceneShader.shaderProgram, "view");
 	// send view matrix to shader
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
     // compute normal matrix for teapot
     normalMatrix = glm::mat3(glm::inverseTranspose(view*model));
-	normalMatrixLoc = glGetUniformLocation(doorShader.shaderProgram, "normalMatrix");
+	normalMatrixLoc = glGetUniformLocation(sceneShader.shaderProgram, "normalMatrix");
 
 	// create projection matrix
 	projection = glm::perspective(glm::radians(45.0f),
                                (float)myWindow.getWindowDimensions().width / (float)myWindow.getWindowDimensions().height,
                                0.1f, 20.0f);
-	projectionLoc = glGetUniformLocation(doorShader.shaderProgram, "projection");
+	projectionLoc = glGetUniformLocation(sceneShader.shaderProgram, "projection");
 	// send projection matrix to shader
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));	
 
 	//set the light direction (direction towards the light)
 	lightDir = glm::vec3(0.0f, 1.0f, 1.0f);
-	lightDirLoc = glGetUniformLocation(doorShader.shaderProgram, "lightDir");
+	lightDirLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightDir");
 	// send light dir to shader
 	glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDir));
 
 	//set light color
 	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); //white light
-	lightColorLoc = glGetUniformLocation(doorShader.shaderProgram, "lightColor");
+	lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
 	// send light color to shader
 	glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
 }
 
+/*
+float doorAngle = 0.0f;
 void renderDoor(gps::Shader shader) {
 	shader.useShaderProgram();
+
+	if (pressedKeys[GLFW_KEY_O]) {
+		if (doorAngle == 60.0f) {
+
+		}
+		else if (doorAngle == 0.0f) {
+			while (doorAngle < 60.0f) {
+				model = glm::mat4(1.0f);
+				// create rotation matrix T-1 * R * T
+				model = glm::translate(											// T-1
+					glm::rotate(												// R
+						glm::translate(model, glm::vec3(2, 0, 0)),				// T
+						doorAngle, glm::vec3(0, 1, 0)), glm::vec3(-1.0f, -0.495f, -0.42f));
+				doorAngle += 0.2f;
+			}
+		}
+	}
 
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -283,13 +335,25 @@ void renderDoor(gps::Shader shader) {
 
 	door.Draw(shader);
 }
+*/
+
+void renderEnv(gps::Shader shader) {
+	shader.useShaderProgram();
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+	scene.Draw(shader);
+
+}
 
 void renderScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	//render the scene
 
-	renderDoor(doorShader);
+	renderEnv(sceneShader);
 	//skyBox.Draw(skyBoxShader, view, projection);
 
 }

@@ -1,0 +1,79 @@
+# Blender MTL File: 'studio.blend'
+# Material Count: 7
+
+newmtl Mat_plastic.left_lrg
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details II.png
+
+newmtl Mat_plastic.right_leg
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details II.png
+
+newmtl Mat_plastic.speaker_cover
+Ns 157.877594
+Ka 0.214286 0.214286 0.214286
+Kd 0.009221 0.009221 0.009221
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\Tex.details II.png
+
+newmtl Mat_wood_maskl_left
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details II.png
+
+newmtl Mat_wood_maskl_right
+Ns 768.987685
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.234317 0.234317 0.234317
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details II.png
+
+newmtl Material-MASKA-przycisków
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Textures\\Tex.details II.png
+
+newmtl Rubber_02
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd Textures\\Tex.details II.png

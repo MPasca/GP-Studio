@@ -1,0 +1,13 @@
+# Blender MTL File: 'studio.blend'
+# Material Count: 1
+
+newmtl EEVEE_Glass_Shader
+Ns 900.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.022695 0.022695 0.022695
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 0.066421
+illum 1
+map_Kd Textures\\gray.png
