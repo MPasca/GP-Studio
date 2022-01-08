@@ -40,9 +40,10 @@ GLint lightColorLoc;
 
 // camera
 gps::Camera myCamera(
-    glm::vec3(0.0f, 0.0f, 3.0f),
-    glm::vec3(0.0f, 0.0f, -10.0f),
-    glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::vec3(0.0f, 0.0f, 2.0f),
+	glm::vec3(0.0f, 0.0f, -10.0f),
+	glm::vec3(0.0f, 1.0f, 0.0f));
+glm::vec3 cameraSize = glm::vec3(1.0f, 1.0f, 1.0f);
 
 GLfloat cameraSpeed = 0.1f;
 GLfloat ogSpeed = 0.1f;
@@ -64,44 +65,41 @@ GLfloat angle;
 
 // shaders
 gps::Shader skyBoxShader;
-gps::Shader doorShader;
-gps::Shader plantShader;
-gps::Shader bookShader;
-gps::Shader cerealShader;
 gps::Shader sceneShader;
+//gps::Shader lightShader;
 
 // skybox
 gps::SkyBox skyBox;
 std::vector<const GLchar*> faces;
 
-GLenum glCheckError_(const char *file, int line)
+GLenum glCheckError_(const char* file, int line)
 {
 	GLenum errorCode;
 	while ((errorCode = glGetError()) != GL_NO_ERROR) {
 		std::string error;
 		switch (errorCode) {
-            case GL_INVALID_ENUM:
-                error = "INVALID_ENUM";
-                break;
-            case GL_INVALID_VALUE:
-                error = "INVALID_VALUE";
-                break;
-            case GL_INVALID_OPERATION:
-                error = "INVALID_OPERATION";
-                break;
-            case GL_STACK_OVERFLOW:
-                error = "STACK_OVERFLOW";
-                break;
-            case GL_STACK_UNDERFLOW:
-                error = "STACK_UNDERFLOW";
-                break;
-            case GL_OUT_OF_MEMORY:
-                error = "OUT_OF_MEMORY";
-                break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION:
-                error = "INVALID_FRAMEBUFFER_OPERATION";
-                break;
-        }
+		case GL_INVALID_ENUM:
+			error = "INVALID_ENUM";
+			break;
+		case GL_INVALID_VALUE:
+			error = "INVALID_VALUE";
+			break;
+		case GL_INVALID_OPERATION:
+			error = "INVALID_OPERATION";
+			break;
+		case GL_STACK_OVERFLOW:
+			error = "STACK_OVERFLOW";
+			break;
+		case GL_STACK_UNDERFLOW:
+			error = "STACK_UNDERFLOW";
+			break;
+		case GL_OUT_OF_MEMORY:
+			error = "OUT_OF_MEMORY";
+			break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			error = "INVALID_FRAMEBUFFER_OPERATION";
+			break;
+		}
 		std::cout << error << " | " << file << " (" << line << ")" << std::endl;
 	}
 	return errorCode;
@@ -117,20 +115,20 @@ void windowResizeCallback(GLFWwindow* window, int width, int height) {
 
 void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, GL_TRUE);
-    }
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
 
 	if (key >= 0 && key < 1024) {
-        if (action == GLFW_PRESS) {
-            pressedKeys[key] = true;
-        } else if (action == GLFW_RELEASE) {
-            pressedKeys[key] = false;
-        }
-    }
+		if (action == GLFW_PRESS) {
+			pressedKeys[key] = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			pressedKeys[key] = false;
+		}
+	}
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
-	//TODO
 	float yaw, pitch;
 
 	yaw = (prevY - ypos) * 0.01f;
@@ -144,6 +142,28 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	prevY = ypos;
 	prevX = xpos;
 }
+
+/*
+bool isBounded(float distance) {
+	float minX = -7.49f, maxX = 7.49f;
+	float minY = -5.96f, maxY = 5.95f;
+	float minZ = 1.6f, maxZ = 4.0f;
+
+	if (myCamera.getCameraPosition().x + distance < minX 
+			|| myCamera.getCameraPosition().x + distance > maxX) {
+		return false;
+	}
+	else if (myCamera.getCameraPosition().y + distance < minY 
+			|| myCamera.getCameraPosition().y + distance > maxY) {
+		return false;
+	}
+	else if (myCamera.getCameraPosition().z + distance < minZ 
+			|| myCamera.getCameraPosition().z + distance > maxZ) {
+		return false;
+	}
+
+	return true;
+}*/
 
 void processMovement() {
 	/*
@@ -167,36 +187,42 @@ void processMovement() {
 	}
 
 	if (pressedKeys[GLFW_KEY_W]) {
+		///isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_S]) {
+		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_BACKWARD, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_A]) {
+		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_LEFT, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_D]) {
+		//isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_RIGHT, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_SPACE]) {
+		//isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_UP, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_LEFT_CONTROL]) {
+		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_DOWN, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -204,21 +230,21 @@ void processMovement() {
 }
 
 void initOpenGLWindow() {
-    myWindow.Create(1024, 768, "Final Project");
+	myWindow.Create(1024, 768, "Final Project");
 }
 
 void setWindowCallbacks() {
 	glfwSetWindowSizeCallback(myWindow.getWindow(), windowResizeCallback);
-    glfwSetKeyCallback(myWindow.getWindow(), keyboardCallback);
+	glfwSetKeyCallback(myWindow.getWindow(), keyboardCallback);
 
-    glfwSetCursorPosCallback(myWindow.getWindow(), mouseCallback);
+	glfwSetCursorPosCallback(myWindow.getWindow(), mouseCallback);
 }
 
 void initOpenGLState() {
 	glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
 
 	glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
-	ratio = myWindow.getWindowDimensions().width/ myWindow.getWindowDimensions().height;
+	ratio = myWindow.getWindowDimensions().width / myWindow.getWindowDimensions().height;
 
 	ogX = myWindow.getWindowDimensions().width / 2;
 	ogY = myWindow.getWindowDimensions().height / 2;
@@ -256,23 +282,28 @@ void initScene() {
 }
 
 void initModels() {
-	door.LoadModel("models/bathroom_door/bathroom_door.obj");
-	door.LoadModel("models/plant/plant.obj");
-	door.LoadModel("models/cereal_box/cereal_box.obj");
-	door.LoadModel("models/book/book.obj");		// problema la cum imi citeste texturile
-	door.LoadModel("models/TV/TV3_cover.obj");
+	scene.LoadModel("models/bathroom_door/bathroom_door.obj");
+	scene.LoadModel("models/plant/plant.obj");
+	scene.LoadModel("models/cereal_box/cereal_box.obj");
+	scene.LoadModel("models/book/book.obj");		// problema la cum imi citeste texturile
+	scene.LoadModel("models/TV/TV3_cover.obj");
 
 	initScene();
 }
 
 void initShaders() {
-	//myBasicShader.loadShader("shaders/basic.vert", "shaders/basic.frag");
-	sceneShader.loadShader("shaders/sceneShader.vert", "shaders/sceneShader.frag");
+	sceneShader.loadShader("shaders/basic.vert", "shaders/basic.frag");
+	//sceneShader.loadShader("shaders/sceneShader.vert", "shaders/sceneShader.frag");
 	sceneShader.useShaderProgram();
+	//lightShader.loadShader("shaders/lightShader.vert", "shaders/lightShader.vert");
+	//lightShader.useShaderProgram();
+	skyBoxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag"); // init the shader
 }
 
 void initUniforms() {
-    model = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+	sceneShader.useShaderProgram();
+
+	model = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::translate(model, glm::vec3(0, -1.5, 0));
 	modelLoc = glGetUniformLocation(sceneShader.shaderProgram, "model");
 
@@ -280,19 +311,19 @@ void initUniforms() {
 	view = myCamera.getViewMatrix();
 	viewLoc = glGetUniformLocation(sceneShader.shaderProgram, "view");
 	// send view matrix to shader
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-    // compute normal matrix for teapot
-    normalMatrix = glm::mat3(glm::inverseTranspose(view*model));
+	// compute normal matrix for teapot
+	normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
 	normalMatrixLoc = glGetUniformLocation(sceneShader.shaderProgram, "normalMatrix");
 
 	// create projection matrix
 	projection = glm::perspective(glm::radians(45.0f),
-                               (float)myWindow.getWindowDimensions().width / (float)myWindow.getWindowDimensions().height,
-                               0.1f, 20.0f);
+		(float)myWindow.getWindowDimensions().width / (float)myWindow.getWindowDimensions().height,
+		0.1f, 20.0f);
 	projectionLoc = glGetUniformLocation(sceneShader.shaderProgram, "projection");
 	// send projection matrix to shader
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));	
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 	//set the light direction (direction towards the light)
 	lightDir = glm::vec3(0.0f, 1.0f, 1.0f);
@@ -307,61 +338,26 @@ void initUniforms() {
 	glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
 }
 
-/*
-float doorAngle = 0.0f;
-void renderDoor(gps::Shader shader) {
-	shader.useShaderProgram();
-
-	if (pressedKeys[GLFW_KEY_O]) {
-		if (doorAngle == 60.0f) {
-
-		}
-		else if (doorAngle == 0.0f) {
-			while (doorAngle < 60.0f) {
-				model = glm::mat4(1.0f);
-				// create rotation matrix T-1 * R * T
-				model = glm::translate(											// T-1
-					glm::rotate(												// R
-						glm::translate(model, glm::vec3(2, 0, 0)),				// T
-						doorAngle, glm::vec3(0, 1, 0)), glm::vec3(-1.0f, -0.495f, -0.42f));
-				doorAngle += 0.2f;
-			}
-		}
-	}
-
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-	door.Draw(shader);
-}
-*/
-
-void renderEnv(gps::Shader shader) {
-	shader.useShaderProgram();
-
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-	scene.Draw(shader);
-
-}
-
 void renderScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	//render the scene
+	skyBox.Draw(skyBoxShader, view, projection);
 
-	renderEnv(sceneShader);
-	//skyBox.Draw(skyBoxShader, view, projection);
+	sceneShader.useShaderProgram();
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+	scene.Draw(sceneShader);
+
 
 }
 
 void cleanup() {
-    myWindow.Delete();
-    //cleanup code for your own data
+	myWindow.Delete();
+	//cleanup code for your own data
 }
+
 
 void initSkybox() {
 	faces.push_back("textures/skybox/right.tga");	//
@@ -371,10 +367,7 @@ void initSkybox() {
 	faces.push_back("textures/skybox/back.tga");	//
 	faces.push_back("textures/skybox/front.tga");	//
 	skyBox.Load(faces);	// loads the faces
-
-	skyBoxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag"); // init the shader
 	skyBoxShader.useShaderProgram();
-
 	view = myCamera.getViewMatrix();	// camera view
 	glUniformMatrix4fv(glGetUniformLocation(skyBoxShader.shaderProgram, "view"), 1, GL_FALSE,
 		glm::value_ptr(view));
@@ -384,27 +377,28 @@ void initSkybox() {
 		glm::value_ptr(projection));
 }
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char* argv[]) {
 
-    try {
-        initOpenGLWindow();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
+	try {
+		initOpenGLWindow();
+	}
+	catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
 
 	initSkybox();
-    initOpenGLState();
+	initOpenGLState();
 	initModels();
 	initShaders();
 	initUniforms();
-    setWindowCallbacks();
+	setWindowCallbacks();
 
 	glCheckError();
 	// application loop
 	while (!glfwWindowShouldClose(myWindow.getWindow())) {
-        processMovement();
-	    renderScene();
+		processMovement();
+		renderScene();
 
 		glfwPollEvents();
 		glfwSwapBuffers(myWindow.getWindow());
@@ -414,5 +408,5 @@ int main(int argc, const char * argv[]) {
 
 	cleanup();
 
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
