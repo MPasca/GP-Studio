@@ -53,13 +53,13 @@ void computeLightComponents()
 	float att = 1.0f / (constant + linear * dist + quadratic * (dist * dist));
 
 	//compute ambient light
-	//ambient = att * ambientStrength * lightColor;
-	ambient *= texture(diffuseTexture, fTexCoords); 
+	ambient = att * ambientStrength * lightColor;
+	//ambient *= texture(diffuseTexture, fTexCoords); 
 
 	
 	//compute diffuse light
-	//diffuse = att * max(dot(normalEye, lightDirN), 0.0f) * lightColor;
-	diffuse *= texture(diffuseTexture, fTexCoords);
+	diffuse = att * max(dot(normalEye, lightDirN), 0.0f) * lightColor;
+	//diffuse *= texture(diffuseTexture, fTexCoords);
 
 	//compute specular light
 	vec3 reflection = reflect(-lightDirN, normalEye);
@@ -73,14 +73,12 @@ void main()
 {
 	computeLightComponents();
 
-	vec3 baseColor = vec3(0.9f, 0.35f, 0.0f); // orange
-	
-	ambient *= baseColor;
-	diffuse *= baseColor;
-	specular *= baseColor;
+
 
     //compute final vertex color
-	vec3 color = min((ambient + diffuse) + specular, 1.0f);
+	vec3 color = min((ambient + diffuse) * texture(diffuseTexture, fTexCoords).rgb 
+                    + specular * texture(specularTexture, fTexCoords).rgb, 1.0f);
+    //vec3 color = vec3(texture(diffuseTexture, fTexCoords));
 
     fColor = vec4(color, 1.0f);
 }

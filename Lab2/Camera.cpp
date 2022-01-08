@@ -23,7 +23,7 @@ namespace gps {
     }
 
     float minX = -7.49f, maxX = 7.49f;
-    float minY = 0.3f, maxY = 4.0f;
+    float minY = -0.3f, maxY = 4.0f;
     float minZ = -5.96f, maxZ = 5.95f;
 
     bool isBounded(glm::vec3 nextPos) {

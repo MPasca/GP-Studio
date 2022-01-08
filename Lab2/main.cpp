@@ -40,7 +40,7 @@ GLint lightColorLoc;
 
 // camera
 gps::Camera myCamera(
-	glm::vec3(0.0f, 0.0f, 2.0f),
+	glm::vec3(0.0f, 0.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -10.0f),
 	glm::vec3(0.0f, 1.0f, 0.0f));
 glm::vec3 cameraSize = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -143,28 +143,6 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	prevX = xpos;
 }
 
-/*
-bool isBounded(float distance) {
-	float minX = -7.49f, maxX = 7.49f;
-	float minY = -5.96f, maxY = 5.95f;
-	float minZ = 1.6f, maxZ = 4.0f;
-
-	if (myCamera.getCameraPosition().x + distance < minX 
-			|| myCamera.getCameraPosition().x + distance > maxX) {
-		return false;
-	}
-	else if (myCamera.getCameraPosition().y + distance < minY 
-			|| myCamera.getCameraPosition().y + distance > maxY) {
-		return false;
-	}
-	else if (myCamera.getCameraPosition().z + distance < minZ 
-			|| myCamera.getCameraPosition().z + distance > maxZ) {
-		return false;
-	}
-
-	return true;
-}*/
-
 void processMovement() {
 	/*
 	if (pressedKeys[GLFW_KEY_Q]) {
@@ -187,45 +165,70 @@ void processMovement() {
 	}
 
 	if (pressedKeys[GLFW_KEY_W]) {
-		///isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_S]) {
-		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_BACKWARD, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_A]) {
-		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_LEFT, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_D]) {
-		//isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_RIGHT, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_SPACE]) {
-		//isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_UP, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_LEFT_CONTROL]) {
-		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_DOWN, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	}
+
+	//std::cout << "light pos xyz:" << lightDir.x << " " << lightDir.y << " " << lightDir.z << "\n";
+	if (pressedKeys[GLFW_KEY_U]) {
+		lightDir.y -= cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_J]) {
+		lightDir.y += cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_H]) {
+		lightDir.x -= cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_K]) {
+		lightDir.x += cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_O]) {
+		lightDir.z -= cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_P]) {
+		lightDir.z += cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
 	}
 }
 
@@ -269,7 +272,7 @@ void initScene() {
 	scene.LoadModel("models/bar_stools/bar_stools.obj");
 	scene.LoadModel("models/fridge/fridge.obj");
 	scene.LoadModel("models/kitchen/kitchen.obj");
-	scene.LoadModel("models/oven/oven.obj");
+	//scene.LoadModel("models/oven/oven.obj");
 	scene.LoadModel("models/TV/TV_table.obj");
 	scene.LoadModel("models/TV/TV1.obj");
 	scene.LoadModel("models/TV/TV2.obj");
