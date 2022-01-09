@@ -22,14 +22,10 @@ namespace gps {
         return glm::lookAt(cameraPosition, cameraTarget, glm::vec3(0.0f, 1.0f, 0.0f));
     }
 
-    float minX = -7.49f, maxX = 7.49f;
-    float minY = -0.3f, maxY = 4.0f;
-    float minZ = -5.96f, maxZ = 5.95f;
-
-    bool isBounded(glm::vec3 nextPos) {
-        float minX = -7.0f, maxX = 7.35f;
-        float minY = 0.0f, maxY = 2.1f;
-        float minZ = -5.8f, maxZ = 5.54f;
+    bool Camera::isBounded(glm::vec3 nextPos) {
+        float minX = -7.49f, maxX = 7.49f;
+        float minY = -0.1f, maxY = 5.0f;
+        float minZ = -5.96f, maxZ = 5.95f;
 
         std::cout << "xyz: " << nextPos.x << " " << nextPos.y << " " << nextPos.z << "\n";
         if (nextPos.x < minX || nextPos.x > maxX) {
@@ -42,6 +38,14 @@ namespace gps {
             return false;
         }
 
+        /*
+        for (gps::Boundary crtBoundary : boundaries) {
+            if (crtBoundary.collisionDetection(nextPos)) {
+                std::cout << "Oh no, our door, is closed" << "\n";
+                return false;
+            }
+        }
+        */
         return true;
     }
 
@@ -106,6 +110,7 @@ namespace gps {
 
         //this->cameraTarget = cameraTarget * q;
 
+
         cameraTarget.x = cameraPosition.x + sin(yawAngle);
         cameraTarget.z = cameraPosition.z - cos(yawAngle);
         cameraTarget.y = cameraPosition.y + sin(pitchAngle);
@@ -117,5 +122,29 @@ namespace gps {
 
     glm::vec3 Camera::getCameraPosition() {
         return cameraPosition;
+    }
+
+    void Camera::setCameraDirection(glm::vec3 newDir) {
+        this->cameraFrontDirection = normalize(newDir);
+        this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
+    }
+
+    void Camera::setCameraPosition(glm::vec3 newPos) {
+        this->cameraPosition = newPos;
+    }
+
+    void Camera::resetCamera() {
+        this->cameraPosition = glm::vec3(-7.0f, 2.0f, -5.0f);
+        this->cameraTarget = glm::vec3(7.0f, 2.0f, -5.0f);
+        this->cameraUpDirection = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        this->cameraFrontDirection = normalize(cameraTarget - cameraPosition);
+        this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
+    }
+
+    void Camera::addBoundary(gps::Boundary newBoundary) {
+        std::cout << "Ding dong, new boundary\n";
+        boundaries.push_back(newBoundary);
+        std::cout << "Aww yee, did done\n";
     }
 }

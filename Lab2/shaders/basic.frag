@@ -63,20 +63,17 @@ void computeLightComponents()
 
 	//compute ambient light
 	ambient = att * ambientStrength * lightColor;
-	//ambient *= texture(diffuseTexture, fTexCoords); 
 
-	
 	//compute diffuse light
 	diffuse = att * max(dot(normalEye, lightDirN), 0.0f) * lightColor;
-	//diffuse *= texture(diffuseTexture, fTexCoords);
 
 	//compute specular light
 	vec3 reflection = reflect(-lightDirN, normalEye);
 	float specCoeff = pow(max(dot(viewDirN, reflection), 0.0f), shininess);
 	specular = att * specularStrength * specCoeff * lightColor;
-	//specular *= texture(specularTexture, fTexCoords);
 }
 
+/*
 vec3 computeTVIllum(){
 	vec3 cameraPosEye = vec3(0.0f);	// in eye coordinates, the viewer is situated at the origin
 	vec3 normalEye = normalize(fNormal);
@@ -108,7 +105,7 @@ vec3 computeTVIllum(){
 
 	return vec3(0.0f);
 }
-
+*/
 
 void main() 
 {
@@ -122,7 +119,7 @@ void main()
 	//if(isTVon){
 		
 	//}
-	color += computeTVIllum();
+	//color += computeTVIllum();
 
     fColor = vec4(color, 1.0f);
 }

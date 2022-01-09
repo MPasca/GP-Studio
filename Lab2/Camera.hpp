@@ -7,6 +7,7 @@
 #include "D:/Faculta/An 3/Sem 1/PG/glm/gtx/quaternion.hpp"
 
 #include <string>
+#include "Collisions.hpp"
 
 namespace gps {
 
@@ -29,12 +30,24 @@ namespace gps {
         // get camera position
         glm::vec3 getCameraPosition();
 
+        void resetCamera();
+        
+        void setCameraDirection(glm::vec3 newDir);
+        void setCameraPosition(glm::vec3 newPos);
+
+        void addBoundary(gps::Boundary newBoundary);
+
+
     private:
         glm::vec3 cameraPosition;
         glm::vec3 cameraTarget;
         glm::vec3 cameraFrontDirection;
         glm::vec3 cameraRightDirection;
         glm::vec3 cameraUpDirection;
+
+        std::vector<Boundary> boundaries;
+        bool isBounded(glm::vec3 nextPos);
+
 
         float yawAngle;
         float pitchAngle;

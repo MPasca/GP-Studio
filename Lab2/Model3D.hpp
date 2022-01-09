@@ -24,6 +24,8 @@ namespace gps {
 
 		void Draw(gps::Shader shaderProgram);
 
+		std::vector<gps::Mesh> getMeshes();
+
     private:
 		// Component meshes - group of objects
         std::vector<gps::Mesh> meshes;
