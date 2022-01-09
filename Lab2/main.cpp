@@ -30,6 +30,23 @@ glm::mat3 normalMatrix;
 glm::vec3 lightDir;
 glm::vec3 lightColor;
 
+// tv light parameters
+bool isTVOn = false;
+glm::vec3 tvPos;
+glm::vec3 tvLightDir;
+
+GLint tvPosLoc;
+GLint tvLightDirLoc;
+GLint isTVonLoc;
+
+// shadow
+GLuint shadowMapFBO;
+GLuint depthMapTexture;
+
+const unsigned int SHADOW_WIDTH = 2048;
+const unsigned int SHADOW_HEIGHT = 2048;
+
+
 // shader uniform locations
 GLint modelLoc;
 GLint viewLoc;
@@ -61,6 +78,7 @@ gps::Model3D book;
 gps::Model3D cerealBox;
 gps::Model3D scene;
 gps::Model3D plant;
+gps::Model3D tv;
 GLfloat angle;
 
 // shaders
@@ -126,6 +144,11 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 			pressedKeys[key] = false;
 		}
 	}
+
+	if (pressedKeys[GLFW_KEY_T]) {
+		isTVOn = !isTVOn;
+	}
+
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
@@ -288,8 +311,9 @@ void initModels() {
 	scene.LoadModel("models/bathroom_door/bathroom_door.obj");
 	scene.LoadModel("models/plant/plant.obj");
 	scene.LoadModel("models/cereal_box/cereal_box.obj");
-	scene.LoadModel("models/book/book.obj");		// problema la cum imi citeste texturile
-	scene.LoadModel("models/TV/TV3_cover.obj");
+	scene.LoadModel("models/book/book.obj");		// de refacut texturile
+
+	tv.LoadModel("models/TV/TV3_cover.obj");
 
 	initScene();
 }
@@ -335,10 +359,102 @@ void initUniforms() {
 	glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDir));
 
 	//set light color
-	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); //white light
+	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // white light
 	lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
 	// send light color to shader
 	glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
+
+	// tv light uniforms
+	tvPos = glm::vec3(-3.0f, 1.1f, 3.0f);
+	tvPosLoc = glGetUniformLocation(sceneShader.shaderProgram, "tvPos");
+	glUniform3fv(tvPosLoc, 1, glm::value_ptr(tvPos));
+
+	tvLightDir = glm::vec3(-1.0f, 0.0f, 0.0f);
+	tvLightDirLoc = glGetUniformLocation(sceneShader.shaderProgram, "tvLightDir");
+	glUniform3fv(tvLightDirLoc, 1, glm::value_ptr(tvLightDir));
+
+	isTVonLoc = glGetUniformLocation(sceneShader.shaderProgram, "isTVon");
+	glUniform1i(isTVonLoc, isTVOn);
+}
+
+void initFBO() {
+	glGenFramebuffers(1, &shadowMapFBO);	// FBO ID
+
+	glGenTextures(1, &depthMapTexture);	// depth texture for FBO
+	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	// 1st arg: texture target \
+	   2nd arg: mipmap level \
+	   3rd arg: the format (depth map) \
+	   4th, 5th arg: width, height \
+	   6th arg: always 0 \
+	   7th arg: format (depth map) \
+	   8th arg: data type (float) \
+	   9th arg: actual image data
+
+	// texture filtering when minimizing/magnifying\
+		GL_NEAREST - returns the value of the closest point
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	// depth map's border colour
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	//		this is for unwanted visual artifacts when generating the shadows (coordinates that pass the border take its colour)\
+		glTexParameteri(texture_target, axis, texture_wrapping)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	// attach texture to FBO 
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTexture, 0);
+
+	// these are needed, but depth mapping doesn't require colour or stencil
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	// once the buffer is completed, it should be unbound til it's actually used
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+glm::mat4 computeLightSpaceTrMatrix() {
+	glm::mat4 lightView = glm::lookAt(lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	const GLfloat near_plane = 0.1f, far_plane = 5.0f;
+	glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, near_plane, far_plane);
+
+	glm::mat4 lightSpaceTrMatrix = lightProjection * lightView;
+	return lightSpaceTrMatrix;
+}
+
+void drawObj(gps::Shader shader, bool depthPass) {
+
+	shader.useShaderProgram();
+
+	model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
+	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+	// do not send the normal matrix if we are rendering in the depth map
+	if (!depthPass) {
+		normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
+		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+	}
+
+	tv.Draw(shader);
+
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(0.5f));
+	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+	// do not send the normal matrix if we are rendering in the depth map
+	if (!depthPass) {
+		normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
+		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+	}
+
+	scene.Draw(shader);
 }
 
 void renderScene() {
