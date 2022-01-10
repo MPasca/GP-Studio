@@ -230,4 +230,9 @@ namespace gps {
             glDeleteVertexArrays(1, &VAO);
         }
 	}
+
+	std::vector<gps::Mesh> Model3D::getMeshes() {
+		return this->meshes;
+	}
+
 }

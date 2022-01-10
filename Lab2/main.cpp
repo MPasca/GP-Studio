@@ -16,6 +16,10 @@
 #include <iostream>
 #include "SkyBox.hpp"
 
+extern "C" {
+	_declspec(dllexport) int NvOptimusEnablement = 0x00000001;
+}
+
 // window
 gps::Window myWindow;
 float ratio;
@@ -30,6 +34,23 @@ glm::mat3 normalMatrix;
 glm::vec3 lightDir;
 glm::vec3 lightColor;
 
+// tv light parameters
+bool isTVOn;
+glm::vec3 tvPos;
+glm::vec3 tvLightDir;
+
+GLint tvPosLoc;
+GLint tvLightDirLoc;
+GLint isTVonLoc;
+
+// shadow
+GLuint shadowMapFBO;
+GLuint depthMapTexture;
+
+const unsigned int SHADOW_WIDTH = 2048;
+const unsigned int SHADOW_HEIGHT = 2048;
+
+
 // shader uniform locations
 GLint modelLoc;
 GLint viewLoc;
@@ -40,7 +61,7 @@ GLint lightColorLoc;
 
 // camera
 gps::Camera myCamera(
-	glm::vec3(0.0f, 0.0f, 2.0f),
+	glm::vec3(1.0f, 1.0f, 1.0f),
 	glm::vec3(0.0f, 0.0f, -10.0f),
 	glm::vec3(0.0f, 1.0f, 0.0f));
 glm::vec3 cameraSize = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -48,6 +69,14 @@ glm::vec3 cameraSize = glm::vec3(1.0f, 1.0f, 1.0f);
 GLfloat cameraSpeed = 0.1f;
 GLfloat ogSpeed = 0.1f;
 GLfloat SPEEDSpeed = 0.5f;
+
+// virtual tour
+// move/rotate	- direction	- value
+enum action { move, rotate };
+enum direction {forward, left, right};
+
+bool onTour;
+int tourStep = 0;
 
 GLboolean pressedKeys[1024];
 float angleY = 0.0f;
@@ -61,6 +90,12 @@ gps::Model3D book;
 gps::Model3D cerealBox;
 gps::Model3D scene;
 gps::Model3D plant;
+gps::Model3D tv;
+gps::Model3D brickWall;
+gps::Model3D halfWall;
+
+gps::Model3D ground;
+gps::Model3D walls;
 GLfloat angle;
 
 // shaders
@@ -71,6 +106,7 @@ gps::Shader sceneShader;
 // skybox
 gps::SkyBox skyBox;
 std::vector<const GLchar*> faces;
+
 
 GLenum glCheckError_(const char* file, int line)
 {
@@ -129,11 +165,21 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+	if (onTour) return;
+
 	float yaw, pitch;
 
-	yaw = (prevY - ypos) * 0.01f;
+	yaw = (xpos - prevX) * 0.01f;
 
-	pitch = (xpos - prevX) * 0.01f;	// x axis - up, down
+	pitch = (prevY - ypos) * 0.01f;
+
+	// so that it doesn't lock
+	if (pitch > 89.0f) {
+		pitch = 89.0f;
+	}
+	else if (pitch < -89.0f) {
+		pitch = -89.0f;
+	}
 
 	myCamera.rotate(yaw, pitch);
 	view = myCamera.getViewMatrix();
@@ -143,30 +189,80 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	prevX = xpos;
 }
 
-/*
-bool isBounded(float distance) {
-	float minX = -7.49f, maxX = 7.49f;
-	float minY = -5.96f, maxY = 5.95f;
-	float minZ = 1.6f, maxZ = 4.0f;
-
-	if (myCamera.getCameraPosition().x + distance < minX 
-			|| myCamera.getCameraPosition().x + distance > maxX) {
-		return false;
-	}
-	else if (myCamera.getCameraPosition().y + distance < minY 
-			|| myCamera.getCameraPosition().y + distance > maxY) {
-		return false;
-	}
-	else if (myCamera.getCameraPosition().z + distance < minZ 
-			|| myCamera.getCameraPosition().z + distance > maxZ) {
-		return false;
-	}
-
-	return true;
-}*/
-
+float movementPoints = 0;
 void processMovement() {
-	/*
+	if (onTour) {
+		switch (tourStep) {
+		case 0:
+			myCamera.resetCamera();
+			movementPoints = 30;
+			tourStep++;
+			break;
+		case 1:
+			if (movementPoints <= 0) {
+				tourStep++;
+				movementPoints = 40;
+				//onTour = false;
+				//tourStep = 0;
+				break;
+			}
+			myCamera.rotate(0.01f, 0.0f);
+			movementPoints--;
+			break;
+		
+		case 2:
+			if(movementPoints <= 0){
+				tourStep++;
+				movementPoints = 500;
+				//onTour = false;
+				//tourStep = 0;
+				break;
+			}
+			myCamera.move(gps::MOVE_FORWARD, 0.2f);
+			movementPoints--;
+			break;
+
+		case 3:
+			if (movementPoints <= 0) {
+				tourStep++;
+				movementPoints = 30;
+				//onTour = false;
+				//tourStep = 0;
+				break;
+			}
+			myCamera.rotate(0.01f, 0.0f);
+			movementPoints--;
+			break;
+
+		case 4:
+			if (movementPoints <= 0) {
+				//tourStep++;
+				onTour = false;
+				tourStep = 0;
+				break;
+			}
+			myCamera.move(gps::MOVE_FORWARD, 0.1f);
+			movementPoints--;
+			break;
+		}
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+	}
+
+	// --------- on tour boiii
+	if (pressedKeys[GLFW_KEY_Z]) {
+		std::cout << "we on tour boii\n";
+		onTour = true;
+	}
+
+	if (pressedKeys[GLFW_KEY_LEFT_SHIFT]) {
+		cameraSpeed = SPEEDSpeed;
+	}
+	else {
+		cameraSpeed = ogSpeed;
+	}
+
 	if (pressedKeys[GLFW_KEY_Q]) {
 		angleY -= 1.0f;
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -178,54 +274,102 @@ void processMovement() {
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 	}
-	*/
-	if (pressedKeys[GLFW_KEY_LEFT_SHIFT]) {
-		cameraSpeed = SPEEDSpeed;
-	}
-	else {
-		cameraSpeed = ogSpeed;
-	}
 
 	if (pressedKeys[GLFW_KEY_W]) {
-		///isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_S]) {
-		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_BACKWARD, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_A]) {
-		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_LEFT, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_D]) {
-		//isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_RIGHT, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_SPACE]) {
-		//isBounded(+cameraSpeed);
 		myCamera.move(gps::MOVE_UP, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
 	if (pressedKeys[GLFW_KEY_LEFT_CONTROL]) {
-		//isBounded(-cameraSpeed);
 		myCamera.move(gps::MOVE_DOWN, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	}
+
+	//std::cout << "light pos xyz:" << lightDir.x << " " << lightDir.y << " " << lightDir.z << "\n";
+	if (pressedKeys[GLFW_KEY_KP_8]) {
+		lightDir.y -= cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_KP_5]) {
+		lightDir.y += cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_KP_4]) {
+		lightDir.x -= cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_KP_6]) {
+		lightDir.x += cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_KP_1]) {
+		lightDir.z -= cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_KP_3]) {
+		lightDir.z += cameraSpeed;
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+	}
+
+	if (pressedKeys[GLFW_KEY_T]) {
+		isTVOn = true;
+	}
+
+	if (pressedKeys[GLFW_KEY_1]) {
+		isTVOn = false;
+	}
+
+	// viewing modes
+
+	if (pressedKeys[GLFW_KEY_L]) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+
+	if (pressedKeys[GLFW_KEY_P]) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+	}
+
+	if (pressedKeys[GLFW_KEY_N]) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	if (pressedKeys[GLFW_KEY_O]) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_SMOOTH);
+	}
+
+	if (pressedKeys[GLFW_KEY_R]) {
+		onTour = false;
 	}
 }
 
@@ -259,34 +403,40 @@ void initOpenGLState() {
 }
 
 void initScene() {
-	scene.LoadModel("models/ground/bathroomGND.obj");
-	scene.LoadModel("models/ground/kitchenGND.obj");
-	scene.LoadModel("models/ground/livingRoomGND.obj");
-	scene.LoadModel("models/brickWalls/brickwalls.obj");
+	ground.LoadModel("models/ground/bathroomGND.obj");
+	ground.LoadModel("models/ground/kitchenGND.obj");
+	ground.LoadModel("models/ground/livingRoomGND.obj");
+
 	scene.LoadModel("models/table/table.obj");
 	scene.LoadModel("models/couch/couch.obj");
 	scene.LoadModel("models/bed/bed.obj");
 	scene.LoadModel("models/bar_stools/bar_stools.obj");
 	scene.LoadModel("models/fridge/fridge.obj");
 	scene.LoadModel("models/kitchen/kitchen.obj");
-	scene.LoadModel("models/oven/oven.obj");
+	//scene.LoadModel("models/oven/oven.obj");
+
 	scene.LoadModel("models/TV/TV_table.obj");
 	scene.LoadModel("models/TV/TV1.obj");
 	scene.LoadModel("models/TV/TV2.obj");
 	scene.LoadModel("models/TV/TV4.obj");
 	scene.LoadModel("models/TV/TV5.obj");
 	scene.LoadModel("models/TV/TV6.obj");
-	scene.LoadModel("models/walls/walls.obj");
-	scene.LoadModel("models/brickWalls/bar.obj");
+	
+	scene.LoadModel("models/bathroom_door/entrance_door.obj");
 
+	walls.LoadModel("models/walls/walls.obj");
 }
 
 void initModels() {
-	scene.LoadModel("models/bathroom_door/bathroom_door.obj");
-	scene.LoadModel("models/plant/plant.obj");
-	scene.LoadModel("models/cereal_box/cereal_box.obj");
-	scene.LoadModel("models/book/book.obj");		// problema la cum imi citeste texturile
-	scene.LoadModel("models/TV/TV3_cover.obj");
+	door.LoadModel("models/bathroom_door/bathroom_door.obj");
+	plant.LoadModel("models/plant/plant.obj");
+	cerealBox.LoadModel("models/cereal_box/cereal_box.obj");
+	book.LoadModel("models/book/book.obj");		// de refacut texturile
+
+	brickWall.LoadModel("models/brickWalls/brickwalls.obj");
+	halfWall.LoadModel("models/brickWalls/bar.obj");
+
+	tv.LoadModel("models/TV/TV3_cover.obj");
 
 	initScene();
 }
@@ -332,32 +482,118 @@ void initUniforms() {
 	glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDir));
 
 	//set light color
-	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); //white light
+	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // white light
 	lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
 	// send light color to shader
 	glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
+
+	// tv light uniforms
+	tvPos = glm::vec3(-3.0f, 1.1f, 3.0f);
+	tvPosLoc = glGetUniformLocation(sceneShader.shaderProgram, "tvPos");
+	glUniform3fv(tvPosLoc, 1, glm::value_ptr(tvPos));
+
+	tvLightDir = glm::vec3(-1.0f, 0.0f, 0.0f);
+	tvLightDirLoc = glGetUniformLocation(sceneShader.shaderProgram, "tvLightDir");
+	glUniform3fv(tvLightDirLoc, 1, glm::value_ptr(tvLightDir));
+
+	isTVonLoc = glGetUniformLocation(sceneShader.shaderProgram, "isTVon");
+	glUniform1i(isTVonLoc, isTVOn);
+}
+
+void initFBO() {
+	glGenFramebuffers(1, &shadowMapFBO);	// FBO ID
+
+	glGenTextures(1, &depthMapTexture);	// depth texture for FBO
+	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	// 1st arg: texture target \
+	   2nd arg: mipmap level \
+	   3rd arg: the format (depth map) \
+	   4th, 5th arg: width, height \
+	   6th arg: always 0 \
+	   7th arg: format (depth map) \
+	   8th arg: data type (float) \
+	   9th arg: actual image data
+
+	// texture filtering when minimizing/magnifying\
+		GL_NEAREST - returns the value of the closest point
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	// depth map's border colour
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	//		this is for unwanted visual artifacts when generating the shadows (coordinates that pass the border take its colour)\
+		glTexParameteri(texture_target, axis, texture_wrapping)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	// attach texture to FBO 
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTexture, 0);
+
+	// these are needed, but depth mapping doesn't require colour or stencil
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	// once the buffer is completed, it should be unbound til it's actually used
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+glm::mat4 computeLightSpaceTrMatrix() {
+	glm::mat4 lightView = glm::lookAt(lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	const GLfloat near_plane = 0.1f, far_plane = 5.0f;
+	glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, near_plane, far_plane);
+
+	glm::mat4 lightSpaceTrMatrix = lightProjection * lightView;
+	return lightSpaceTrMatrix;
 }
 
 void renderScene() {
+	glClearColor(0.8, 0.8, 0.8, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	processMovement();
+
+	// model matrix for door
+	model = glm::translate(glm::mat4(1.0f), glm::vec3());
+
+	//glViewport(0, 0, retina_width, retina_height);
 	skyBox.Draw(skyBoxShader, view, projection);
 
 	sceneShader.useShaderProgram();
 
+	//initialize the model matrix
+	model = glm::mat4(1.0f);
+	modelLoc = glGetUniformLocation(sceneShader.shaderProgram, "model");
+
+	//send matrix data to vertex shader
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
 	scene.Draw(sceneShader);
+	halfWall.Draw(sceneShader);
+	brickWall.Draw(sceneShader);
+	door.Draw(sceneShader);
+	plant.Draw(sceneShader);
+	cerealBox.Draw(sceneShader);
+	
+	walls.Draw(sceneShader);
+	ground.Draw(sceneShader);
 
-
+	if (!isTVOn) {
+		tv.Draw(sceneShader);
+	}
 }
 
 void cleanup() {
 	myWindow.Delete();
 	//cleanup code for your own data
 }
-
 
 void initSkybox() {
 	faces.push_back("textures/skybox/right.tga");	//
@@ -387,6 +623,8 @@ int main(int argc, const char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	isTVOn = false;
+
 	initSkybox();
 	initOpenGLState();
 	initModels();
@@ -395,6 +633,9 @@ int main(int argc, const char* argv[]) {
 	setWindowCallbacks();
 
 	glCheckError();
+
+	//myCamera.addBoundary(gps::Boundary(halfWall));
+	//myCamera.addBoundary(gps::Boundary(brickWall));
 	// application loop
 	while (!glfwWindowShouldClose(myWindow.getWindow())) {
 		processMovement();
