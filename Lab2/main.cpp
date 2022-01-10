@@ -16,6 +16,10 @@
 #include <iostream>
 #include "SkyBox.hpp"
 
+extern "C" {
+	_declspec(dllexport) int NvOptimusEnablement = 0x00000001;
+}
+
 // window
 gps::Window myWindow;
 float ratio;
@@ -165,9 +169,9 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 	float yaw, pitch;
 
-	yaw = (prevY - ypos) * 0.01f;
+	yaw = (xpos - prevX) * 0.01f;
 
-	pitch = (xpos - prevX) * 0.01f;	// x axis - up, down
+	pitch = (prevY - ypos) * 0.01f;
 
 	// so that it doesn't lock
 	if (pitch > 89.0f) {
@@ -191,17 +195,59 @@ void processMovement() {
 		switch (tourStep) {
 		case 0:
 			myCamera.resetCamera();
-			movementPoints = 5;
+			movementPoints = 30;
 			tourStep++;
 			break;
 		case 1:
-			if (movementPoints == 0) {
+			if (movementPoints <= 0) {
+				tourStep++;
+				movementPoints = 40;
+				//onTour = false;
+				//tourStep = 0;
+				break;
+			}
+			myCamera.rotate(0.01f, 0.0f);
+			movementPoints--;
+			break;
+		
+		case 2:
+			if(movementPoints <= 0){
+				tourStep++;
+				movementPoints = 500;
+				//onTour = false;
+				//tourStep = 0;
+				break;
+			}
+			myCamera.move(gps::MOVE_FORWARD, 0.2f);
+			movementPoints--;
+			break;
+
+		case 3:
+			if (movementPoints <= 0) {
+				tourStep++;
+				movementPoints = 30;
+				//onTour = false;
+				//tourStep = 0;
+				break;
+			}
+			myCamera.rotate(0.01f, 0.0f);
+			movementPoints--;
+			break;
+
+		case 4:
+			if (movementPoints <= 0) {
 				//tourStep++;
 				onTour = false;
+				tourStep = 0;
+				break;
 			}
-			myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
+			myCamera.move(gps::MOVE_FORWARD, 0.1f);
 			movementPoints--;
+			break;
 		}
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
 	}
 
 	// --------- on tour boiii

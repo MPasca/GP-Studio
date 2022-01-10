@@ -106,14 +106,15 @@ namespace gps {
         yawAngle += yaw;
         pitchAngle += pitch;
 
+        //std::cout << "pitchAngle: " << pitchAngle << "\n";
         //glm::quat q = glm::quat(glm::vec3(yawAngle, pitchAngle, 0));
 
         //this->cameraTarget = cameraTarget * q;
 
 
-        cameraTarget.x = cameraPosition.x + sin(yawAngle);
-        cameraTarget.z = cameraPosition.z - cos(yawAngle);
-        cameraTarget.y = cameraPosition.y + sin(pitchAngle);
+        cameraTarget.x = cameraPosition.x + sin(pitchAngle);
+        cameraTarget.z = cameraPosition.z - cos(pitchAngle);
+        cameraTarget.y = cameraPosition.y + sin(yawAngle);
 
         this->cameraFrontDirection = normalize(cameraTarget - cameraPosition);
         this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
@@ -134,6 +135,9 @@ namespace gps {
     }
 
     void Camera::resetCamera() {
+        this->yawAngle = 0.0f;
+        this->pitchAngle = 1.91f;
+
         this->cameraPosition = glm::vec3(-7.0f, 2.0f, -5.0f);
         this->cameraTarget = glm::vec3(7.0f, 2.0f, -5.0f);
         this->cameraUpDirection = glm::vec3(0.0f, 1.0f, 0.0f);
