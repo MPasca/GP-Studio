@@ -1,6 +1,6 @@
 #define GLEW_STATIC
-#include <GL/glew.h>
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "D:/Faculta/An 3/Sem 1/PG/glm/glm.hpp"	                    //core glm functionality
@@ -15,6 +15,8 @@
 
 #include <iostream>
 #include "SkyBox.hpp"
+
+#include "MediaPlayer.h"
 
 extern "C" {
 	_declspec(dllexport) int NvOptimusEnablement = 0x00000001;
@@ -51,6 +53,9 @@ glm::vec3 doorPos = glm::vec3(3.51f, 1.16f, 3.15f);
 bool cerealSpilled;
 glm::vec3 cerealPos = glm::vec3(0.039f, 0.033f, -4.158f);
 
+// sound
+audio::MediaPlayer mediaPlayer;
+bool playSound;
 
 // shadow
 GLuint shadowMapFBO;
@@ -176,9 +181,30 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 	}
 
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
-		cerealSpilled = !cerealSpilled;
+		playSound = !playSound;
+		if (playSound) {
+			mediaPlayer.playSong();
+		}
+		else {
+			mediaPlayer.pauseSong();
+		}
 	}
 
+	if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+		mediaPlayer.volUp();
+	}
+
+	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+		mediaPlayer.volDown();
+	}
+
+	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
+		mediaPlayer.prevSong();
+	}
+
+	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
+		mediaPlayer.nextSong();
+	}
 
 	if (key >= 0 && key < 1024) {
 		if (action == GLFW_PRESS) {
@@ -588,6 +614,7 @@ glm::mat4 computeLightSpaceTrMatrix() {
 }
 
 void renderScene() {
+
 	glClearColor(0.8, 0.8, 0.8, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -676,6 +703,16 @@ void initSkybox() {
 		glm::value_ptr(projection));
 }
 
+void initMediaPlayer() {
+	mediaPlayer = audio::MediaPlayer();
+
+	mediaPlayer.addAudioFile("audios/Beck - Loser.mp3");
+	mediaPlayer.addAudioFile("audios/Joy Division - Transmission.mp3");
+	mediaPlayer.addAudioFile("audios/New Order - Blue Monday.mp3");
+	mediaPlayer.addAudioFile("audios/The Cure - Boys Don't Cry.mp3");
+	mediaPlayer.addAudioFile("audios/Smashing Pumpkins - Today.wma");
+}
+
 int main(int argc, const char* argv[]) {
 
 	try {
@@ -689,7 +726,9 @@ int main(int argc, const char* argv[]) {
 	isTVOn = false;
 	openDoor = false;
 	cerealSpilled = false;
+	playSound = false;
 
+	initMediaPlayer();
 	initSkybox();
 	initOpenGLState();
 	initModels();
