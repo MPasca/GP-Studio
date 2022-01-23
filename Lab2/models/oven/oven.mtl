@@ -10,6 +10,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Kd tex.png
 
 newmtl Dark_Black_Glass
 Ns 900.000000
@@ -20,6 +21,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png
 
 newmtl Grey_Steel
 Ns 440.999985
@@ -30,16 +32,18 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png
 
 newmtl Shiny_Steel
 Ns 728.999998
 Ka 1.000000 1.000000 1.000000
-Kd 0.522522 0.522522 0.522522
+Kd 0.520996 0.520995 0.520996
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png
 
 newmtl Stove_Black_Metal
 Ns 440.999985
@@ -50,16 +54,18 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png
 
 newmtl Stove_Dark_Grey_Steel
 Ns 440.999985
 Ka 1.000000 1.000000 1.000000
-Kd 0.214041 0.214041 0.214041
+Kd 0.262251 0.262251 0.262251
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png
 
 newmtl Stove_Glass
 Ns 900.000000
@@ -70,6 +76,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
+map_Kd tex.png
 
 newmtl Stove_Grey_Steel_Smooth
 Ns 650.249991
@@ -80,6 +87,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png
 
 newmtl Stove_Inside_Black_Metal
 Ns 728.999998
@@ -90,13 +98,15 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png
 
 newmtl Stove_Stone
 Ns 225.000000
 Ka 0.800000 0.800000 0.800000
-Kd 0.019607 0.019607 0.019607
+Kd 0.019382 0.019382 0.019382
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
+map_Kd tex.png

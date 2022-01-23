@@ -134,6 +134,10 @@ namespace gps {
         this->cameraPosition = newPos;
     }
 
+    void Camera::setCameraTarget(glm::vec3 newTarget) {
+        this->cameraTarget = newTarget;
+    }
+
     void Camera::resetCamera() {
         this->yawAngle = 0.0f;
         this->pitchAngle = 1.91f;

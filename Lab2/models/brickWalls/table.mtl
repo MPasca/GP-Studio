@@ -1,0 +1,12 @@
+# Blender MTL File: 'studio.blend'
+# Material Count: 1
+
+newmtl Material.001
+Ns 323.999994
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.706834 0.706834
+Ks 0.308824 0.308824 0.308824
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2

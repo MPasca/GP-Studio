@@ -34,6 +34,7 @@ namespace gps {
         
         void setCameraDirection(glm::vec3 newDir);
         void setCameraPosition(glm::vec3 newPos);
+        void setCameraTarget(glm::vec3 newTarget);
 
         void addBoundary(gps::Boundary newBoundary);
 
