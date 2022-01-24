@@ -29,6 +29,8 @@ namespace gps {
 
         // get camera position
         glm::vec3 getCameraPosition();
+        glm::vec3 getCameraDirection();
+        glm::vec3 getCameraUp();
 
         void resetCamera();
         

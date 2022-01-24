@@ -54,8 +54,10 @@ bool cerealSpilled;
 glm::vec3 cerealPos = glm::vec3(0.039f, 0.033f, -4.158f);
 
 // sound
-audio::MediaPlayer mediaPlayer;
+audio::MediaPlayer mediaPlayer = audio::MediaPlayer(irrklang::vec3df(-9.99f, -51.555f, 6.6016f));
 bool playSound;
+
+audio::MediaPlayer tvPlayer = audio::MediaPlayer(irrklang::vec3df(-3.088f, 1.14f, -2.725f));
 
 // shadow
 GLuint shadowMapFBO;
@@ -178,6 +180,9 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 
 	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
 		isTVOn = !isTVOn;
+		if (isTVOn) {
+			tvPlayer.playSoundEffect("tv_static");
+		}
 	}
 
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
@@ -430,6 +435,9 @@ void processMovement() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 	}
+
+	mediaPlayer.setListenerPosition(myCamera.getCameraPosition(), myCamera.getCameraDirection(), myCamera.getCameraUp());
+	tvPlayer.setListenerPosition(myCamera.getCameraPosition(), myCamera.getCameraDirection(), myCamera.getCameraUp());
 }
 
 void initOpenGLWindow() {
@@ -677,6 +685,7 @@ void renderScene() {
 	}
 	if (!isTVOn) {
 		tv.Draw(sceneShader);
+		tvPlayer.pauseSong();
 	}
 }
 
@@ -704,13 +713,12 @@ void initSkybox() {
 }
 
 void initMediaPlayer() {
-	mediaPlayer = audio::MediaPlayer();
-
-	mediaPlayer.addAudioFile("audios/Beck - Loser.mp3");
-	mediaPlayer.addAudioFile("audios/Joy Division - Transmission.mp3");
-	mediaPlayer.addAudioFile("audios/New Order - Blue Monday.mp3");
-	mediaPlayer.addAudioFile("audios/The Cure - Boys Don't Cry.mp3");
-	mediaPlayer.addAudioFile("audios/Smashing Pumpkins - Today.wma");
+	mediaPlayer.addAudioFile("Beck - Loser");
+	mediaPlayer.addAudioFile("Joy Division - Transmission");
+	mediaPlayer.addAudioFile("New Order - Blue Monday");
+	mediaPlayer.addAudioFile("The Cure - Boys Don't Cry");
+	mediaPlayer.addAudioFile("Smashing Pumpkins - Today");
+	mediaPlayer.addAudioFile("Sonic Youth - Teen Age Riot");
 }
 
 int main(int argc, const char* argv[]) {

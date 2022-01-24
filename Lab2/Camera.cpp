@@ -8,6 +8,9 @@ namespace gps {
     //Camera constructor
     Camera::Camera(glm::vec3 cameraPosition, glm::vec3 cameraTarget, glm::vec3 cameraUp) {
         //TODO
+        this->pitchAngle = 0;
+        this->yawAngle = 0;
+
         this->cameraPosition = cameraPosition;
         this->cameraTarget = cameraTarget;
 
@@ -123,6 +126,14 @@ namespace gps {
 
     glm::vec3 Camera::getCameraPosition() {
         return cameraPosition;
+    }
+
+    glm::vec3 Camera::getCameraDirection() {
+        return cameraFrontDirection;
+    }
+
+    glm::vec3 Camera::getCameraUp() {
+        return cameraUpDirection;
     }
 
     void Camera::setCameraDirection(glm::vec3 newDir) {
