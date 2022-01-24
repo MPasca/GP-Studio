@@ -1,6 +1,6 @@
 #define GLEW_STATIC
-#include <GL/glew.h>
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "D:/Faculta/An 3/Sem 1/PG/glm/glm.hpp"	                    //core glm functionality
@@ -15,6 +15,8 @@
 
 #include <iostream>
 #include "SkyBox.hpp"
+
+#include "MediaPlayer.h"
 
 extern "C" {
 	_declspec(dllexport) int NvOptimusEnablement = 0x00000001;
@@ -43,6 +45,20 @@ GLint tvPosLoc;
 GLint tvLightDirLoc;
 GLint isTVonLoc;
 
+// door opening
+bool openDoor;
+glm::vec3 doorPos = glm::vec3(3.51f, 1.16f, 3.15f);
+
+// spilling cereal
+bool cerealSpilled;
+glm::vec3 cerealPos = glm::vec3(0.039f, 0.033f, -4.158f);
+
+// sound
+audio::MediaPlayer mediaPlayer = audio::MediaPlayer(irrklang::vec3df(-9.99f, -51.555f, 6.6016f));
+bool playSound;
+
+audio::MediaPlayer tvPlayer = audio::MediaPlayer(irrklang::vec3df(-3.088f, 1.14f, -2.725f));
+
 // shadow
 GLuint shadowMapFBO;
 GLuint depthMapTexture;
@@ -67,8 +83,8 @@ gps::Camera myCamera(
 glm::vec3 cameraSize = glm::vec3(1.0f, 1.0f, 1.0f);
 
 GLfloat cameraSpeed = 0.1f;
-GLfloat ogSpeed = 0.1f;
-GLfloat SPEEDSpeed = 0.5f;
+GLfloat ogSpeed = 0.05f;
+GLfloat SPEEDSpeed = 0.1f;
 
 // virtual tour
 // move/rotate	- direction	- value
@@ -93,6 +109,9 @@ gps::Model3D plant;
 gps::Model3D tv;
 gps::Model3D brickWall;
 gps::Model3D halfWall;
+
+gps::Model3D speakers;
+gps::Model3D wallLights;
 
 gps::Model3D ground;
 gps::Model3D walls;
@@ -154,6 +173,44 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
 
+	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+		std::cout << "Come in!\n";
+		openDoor = !openDoor;
+	}
+
+	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+		isTVOn = !isTVOn;
+		if (isTVOn) {
+			tvPlayer.playSoundEffect("tv_static");
+		}
+	}
+
+	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
+		playSound = !playSound;
+		if (playSound) {
+			mediaPlayer.playSong();
+		}
+		else {
+			mediaPlayer.pauseSong();
+		}
+	}
+
+	if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+		mediaPlayer.volUp();
+	}
+
+	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+		mediaPlayer.volDown();
+	}
+
+	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
+		mediaPlayer.prevSong();
+	}
+
+	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
+		mediaPlayer.nextSong();
+	}
+
 	if (key >= 0 && key < 1024) {
 		if (action == GLFW_PRESS) {
 			pressedKeys[key] = true;
@@ -162,6 +219,7 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 			pressedKeys[key] = false;
 		}
 	}
+
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
@@ -187,6 +245,10 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 	prevY = ypos;
 	prevX = xpos;
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		cerealSpilled = !cerealSpilled;
+	}
 }
 
 float movementPoints = 0;
@@ -202,7 +264,7 @@ void processMovement() {
 			if (movementPoints <= 0) {
 				tourStep++;
 				movementPoints = 40;
-				//onTour = false;
+				//z = false;
 				//tourStep = 0;
 				break;
 			}
@@ -247,7 +309,6 @@ void processMovement() {
 		}
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
 	}
 
 	// --------- on tour boiii
@@ -342,14 +403,6 @@ void processMovement() {
 		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
 	}
 
-	if (pressedKeys[GLFW_KEY_T]) {
-		isTVOn = true;
-	}
-
-	if (pressedKeys[GLFW_KEY_1]) {
-		isTVOn = false;
-	}
-
 	// viewing modes
 
 	if (pressedKeys[GLFW_KEY_L]) {
@@ -371,6 +424,20 @@ void processMovement() {
 	if (pressedKeys[GLFW_KEY_R]) {
 		onTour = false;
 	}
+
+	// sit on couch
+	// -7.12275 1.55587 -3.20282  
+	if (pressedKeys[GLFW_KEY_C]) {
+		myCamera.setCameraPosition(glm::vec3(-7.123f, 1.55f, -3.20f));
+		myCamera.setCameraTarget(glm::vec3(-3.361f, 1.11f, -2.97f));
+		myCamera.setCameraDirection(glm::vec3(1, 0, 0));
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+	}
+
+	mediaPlayer.setListenerPosition(myCamera.getCameraPosition(), myCamera.getCameraDirection(), myCamera.getCameraUp());
+	tvPlayer.setListenerPosition(myCamera.getCameraPosition(), myCamera.getCameraDirection(), myCamera.getCameraUp());
 }
 
 void initOpenGLWindow() {
@@ -413,7 +480,7 @@ void initScene() {
 	scene.LoadModel("models/bar_stools/bar_stools.obj");
 	scene.LoadModel("models/fridge/fridge.obj");
 	scene.LoadModel("models/kitchen/kitchen.obj");
-	//scene.LoadModel("models/oven/oven.obj");
+	scene.LoadModel("models/oven/oven.obj");
 
 	scene.LoadModel("models/TV/TV_table.obj");
 	scene.LoadModel("models/TV/TV1.obj");
@@ -432,6 +499,9 @@ void initModels() {
 	plant.LoadModel("models/plant/plant.obj");
 	cerealBox.LoadModel("models/cereal_box/cereal_box.obj");
 	book.LoadModel("models/book/book.obj");		// de refacut texturile
+	speakers.LoadModel("models/speakers/speaker.obj");
+
+	wallLights.LoadModel("models/wallLight/wallLights.obj");
 
 	brickWall.LoadModel("models/brickWalls/brickwalls.obj");
 	halfWall.LoadModel("models/brickWalls/bar.obj");
@@ -446,7 +516,6 @@ void initShaders() {
 	//sceneShader.loadShader("shaders/sceneShader.vert", "shaders/sceneShader.frag");
 	sceneShader.useShaderProgram();
 	//lightShader.loadShader("shaders/lightShader.vert", "shaders/lightShader.vert");
-	//lightShader.useShaderProgram();
 	skyBoxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag"); // init the shader
 }
 
@@ -553,13 +622,33 @@ glm::mat4 computeLightSpaceTrMatrix() {
 }
 
 void renderScene() {
+
 	glClearColor(0.8, 0.8, 0.8, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	processMovement();
 
-	// model matrix for door
-	model = glm::translate(glm::mat4(1.0f), glm::vec3());
+	sceneShader.useShaderProgram();
+
+	if (openDoor) {
+		glm::mat4 doorModel = glm::mat4(1.0f);
+		doorModel = glm::translate(													// T-1
+			glm::rotate(												// R
+				glm::translate(model, doorPos),				// T
+				glm::radians(60.0f), glm::vec3(0, 1.0f, 0)), -doorPos);
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(doorModel));
+		door.Draw(sceneShader);
+	}
+	
+	if (cerealSpilled) {
+		glm::mat4 cerealModel = glm::mat4(1.0f);
+		cerealModel = glm::translate(							// T-1
+			glm::rotate(										// R
+				glm::translate(model, cerealPos),				// T
+				glm::radians(90.0f), glm::vec3(1, 0, 0)), -cerealPos);
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cerealModel));
+		cerealBox.Draw(sceneShader);
+	}
 
 	//glViewport(0, 0, retina_width, retina_height);
 	skyBox.Draw(skyBoxShader, view, projection);
@@ -578,15 +667,25 @@ void renderScene() {
 	scene.Draw(sceneShader);
 	halfWall.Draw(sceneShader);
 	brickWall.Draw(sceneShader);
-	door.Draw(sceneShader);
 	plant.Draw(sceneShader);
-	cerealBox.Draw(sceneShader);
+	
+	book.Draw(sceneShader);
+
+	speakers.Draw(sceneShader);
+	wallLights.Draw(sceneShader);
 	
 	walls.Draw(sceneShader);
 	ground.Draw(sceneShader);
 
+	if (!cerealSpilled) {
+		cerealBox.Draw(sceneShader);
+	}
+	if (!openDoor) {
+		door.Draw(sceneShader);
+	}
 	if (!isTVOn) {
 		tv.Draw(sceneShader);
+		tvPlayer.pauseSong();
 	}
 }
 
@@ -613,6 +712,15 @@ void initSkybox() {
 		glm::value_ptr(projection));
 }
 
+void initMediaPlayer() {
+	mediaPlayer.addAudioFile("Beck - Loser");
+	mediaPlayer.addAudioFile("Joy Division - Transmission");
+	mediaPlayer.addAudioFile("New Order - Blue Monday");
+	mediaPlayer.addAudioFile("The Cure - Boys Don't Cry");
+	mediaPlayer.addAudioFile("Smashing Pumpkins - Today");
+	mediaPlayer.addAudioFile("Sonic Youth - Teen Age Riot");
+}
+
 int main(int argc, const char* argv[]) {
 
 	try {
@@ -624,7 +732,11 @@ int main(int argc, const char* argv[]) {
 	}
 
 	isTVOn = false;
+	openDoor = false;
+	cerealSpilled = false;
+	playSound = false;
 
+	initMediaPlayer();
 	initSkybox();
 	initOpenGLState();
 	initModels();

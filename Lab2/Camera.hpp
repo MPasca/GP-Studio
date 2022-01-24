@@ -29,11 +29,14 @@ namespace gps {
 
         // get camera position
         glm::vec3 getCameraPosition();
+        glm::vec3 getCameraDirection();
+        glm::vec3 getCameraUp();
 
         void resetCamera();
         
         void setCameraDirection(glm::vec3 newDir);
         void setCameraPosition(glm::vec3 newPos);
+        void setCameraTarget(glm::vec3 newTarget);
 
         void addBoundary(gps::Boundary newBoundary);
 
