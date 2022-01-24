@@ -115,6 +115,7 @@ gps::Model3D wallLights;
 
 gps::Model3D ground;
 gps::Model3D walls;
+gps::Model3D windows;
 GLfloat angle;
 
 // shaders
@@ -312,8 +313,8 @@ void processMovement() {
 	}
 
 	// --------- on tour boiii
+
 	if (pressedKeys[GLFW_KEY_Z]) {
-		std::cout << "we on tour boii\n";
 		onTour = true;
 	}
 
@@ -461,6 +462,9 @@ void initOpenGLState() {
 	ogY = myWindow.getWindowDimensions().height / 2;
 	prevX = ogX, prevY = ogY;
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -495,8 +499,9 @@ void initScene() {
 }
 
 void initModels() {
+	windows.LoadModel("models/windows/windowGlass.obj");
+
 	door.LoadModel("models/bathroom_door/bathroom_door.obj");
-	plant.LoadModel("models/plant/plant.obj");
 	cerealBox.LoadModel("models/cereal_box/cereal_box.obj");
 	book.LoadModel("models/book/book.obj");		// de refacut texturile
 	speakers.LoadModel("models/speakers/speaker.obj");
@@ -508,6 +513,9 @@ void initModels() {
 
 	tv.LoadModel("models/TV/TV3_cover.obj");
 
+	windows.LoadModel("models/windows/windowPane.obj");
+
+	plant.LoadModel("models/plant/plant.obj");
 	initScene();
 }
 
@@ -632,8 +640,8 @@ void renderScene() {
 
 	if (openDoor) {
 		glm::mat4 doorModel = glm::mat4(1.0f);
-		doorModel = glm::translate(													// T-1
-			glm::rotate(												// R
+		doorModel = glm::translate(							// T-1
+			glm::rotate(									// R
 				glm::translate(model, doorPos),				// T
 				glm::radians(60.0f), glm::vec3(0, 1.0f, 0)), -doorPos);
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(doorModel));
@@ -664,10 +672,11 @@ void renderScene() {
 
 	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
+	windows.Draw(sceneShader);
+
 	scene.Draw(sceneShader);
 	halfWall.Draw(sceneShader);
 	brickWall.Draw(sceneShader);
-	plant.Draw(sceneShader);
 	
 	book.Draw(sceneShader);
 
@@ -687,6 +696,8 @@ void renderScene() {
 		tv.Draw(sceneShader);
 		tvPlayer.pauseSong();
 	}
+
+	plant.Draw(sceneShader);
 }
 
 void cleanup() {
@@ -746,8 +757,11 @@ int main(int argc, const char* argv[]) {
 
 	glCheckError();
 
-	//myCamera.addBoundary(gps::Boundary(halfWall));
-	//myCamera.addBoundary(gps::Boundary(brickWall));
+	//myCamera.addBoundary(halfWall);
+	//gps::Boundary newBoundary = gps::Boundary(halfWall);
+	//std::cout << "Min halfWall boundary: " << newBoundary.getMinCoord().x << newBoundary.getMinCoord().y << newBoundary.getMinCoord().z << "\n";
+	//std::cout << "Max halfWall boundary: " << newBoundary.getMaxCoord().x << newBoundary.getMaxCoord().y << newBoundary.getMaxCoord().z << "\n";
+
 	// application loop
 	while (!glfwWindowShouldClose(myWindow.getWindow())) {
 		processMovement();

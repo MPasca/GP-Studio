@@ -17,8 +17,11 @@ namespace gps {
 		Boundary(gps::Model3D model);
 
 		bool collisionDetection(glm::vec3 pos);
+
+		glm::vec3 getMinCoord();
+		glm::vec3 getMaxCoord();
 	private:
-		float minX, maxX, minY, maxY, minZ, maxZ;
+		gps::Model3D crtModel;
 	};
 }
 

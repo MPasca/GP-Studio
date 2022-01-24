@@ -54,6 +54,8 @@ public:
 
 	void Draw(gps::Shader shader);
 
+    bool checkCollision(glm::vec3 coordinates);
+
 private:
     /*  Render data  */
     Buffers buffers;

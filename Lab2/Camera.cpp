@@ -30,7 +30,6 @@ namespace gps {
         float minY = -0.1f, maxY = 5.0f;
         float minZ = -5.96f, maxZ = 5.95f;
 
-        std::cout << "xyz: " << nextPos.x << " " << nextPos.y << " " << nextPos.z << "\n";
         if (nextPos.x < minX || nextPos.x > maxX) {
             return false;
         }
@@ -41,14 +40,15 @@ namespace gps {
             return false;
         }
 
-        /*
-        for (gps::Boundary crtBoundary : boundaries) {
-            if (crtBoundary.collisionDetection(nextPos)) {
-                std::cout << "Oh no, our door, is closed" << "\n";
-                return false;
+
+        for (gps::Model3D crtBoundary : boundaries) {
+            for (gps::Mesh crtMesh : crtBoundary.getMeshes()) {
+                if (crtMesh.checkCollision(nextPos)) {
+                    return false;
+                }
             }
         }
-        */
+
         return true;
     }
 
@@ -101,9 +101,9 @@ namespace gps {
         this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
     }
 
-    //update the camera internal parameters following a camera rotate event
-    //yaw - camera rotation around the y axis
-    //pitch - camera rotation around the x axis
+    // update the camera internal parameters following a camera rotate event
+    // yaw - camera rotation around the y axis
+    // pitch - camera rotation around the x axis
     void Camera::rotate(float pitch, float yaw) {
         //TODO
         yawAngle += yaw;
@@ -161,9 +161,7 @@ namespace gps {
         this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
     }
 
-    void Camera::addBoundary(gps::Boundary newBoundary) {
-        std::cout << "Ding dong, new boundary\n";
+    void Camera::addBoundary(gps::Model3D newBoundary) {
         boundaries.push_back(newBoundary);
-        std::cout << "Aww yee, did done\n";
     }
 }

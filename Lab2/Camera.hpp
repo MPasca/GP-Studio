@@ -38,7 +38,7 @@ namespace gps {
         void setCameraPosition(glm::vec3 newPos);
         void setCameraTarget(glm::vec3 newTarget);
 
-        void addBoundary(gps::Boundary newBoundary);
+        void addBoundary(gps::Model3D newBoundary);
 
 
     private:
@@ -48,7 +48,7 @@ namespace gps {
         glm::vec3 cameraRightDirection;
         glm::vec3 cameraUpDirection;
 
-        std::vector<Boundary> boundaries;
+        std::vector<Model3D> boundaries;
         bool isBounded(glm::vec3 nextPos);
 
 

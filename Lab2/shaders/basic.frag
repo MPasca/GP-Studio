@@ -134,21 +134,19 @@ float computeShadow()
 
 void main() 
 {
+	vec4 colorFromTexture = texture(diffuseTexture, fTexCoords);
+
 	computeLightComponents();
 
-	vec3 baseColor = vec3(0.9f, 0.35f, 0.0f);//orange
+	vec3 baseColor = vec3(0.9f, 0.35f, 0.0f); //orange
 
     float shadow = computeShadow(); 
-
-    //compute final vertex color (texture + light for now)
+	
+	//compute final vertex color (texture + light for now)
 	vec3 color = min((ambient + (1.0f - shadow) * diffuse) * texture(diffuseTexture, fTexCoords).rgb 
-                    + (1.0f - shadow) * specular * texture(specularTexture, fTexCoords).rgb, 1.0f);
-    //vec3 color = vec3(texture(diffuseTexture, fTexCoords));
+					+ (1.0f - shadow) * specular * texture(specularTexture, fTexCoords).rgb, 1.0f);
 
-	//if(isTVon){
-		
-	//}
 	//color += computeTVIllum();
 
-    fColor = vec4(color, 1.0f);
+    fColor = vec4(color, colorFromTexture.a);
 }
