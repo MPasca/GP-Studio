@@ -118,6 +118,7 @@ float computeShadow()
  
     if (normalizedCoords.z > 1.0f) 
 	   return 0.0f;
+
     // Transform to [0,1] range 
     normalizedCoords = normalizedCoords * 0.5 + 0.5;
 	
@@ -146,10 +147,10 @@ void main()
     float shadow = computeShadow(); 
 	
 	//compute final vertex color (texture + light for now)
-	//vec3 color = min((ambient + (1.0f - shadow) * diffuse) * texture(diffuseTexture, fTexCoords).rgb 
-	//				+ (1.0f - shadow) * specular * texture(specularTexture, fTexCoords).rgb, 1.0f);
+	vec3 color = min((ambient + (1.0f - shadow) * diffuse) * texture(diffuseTexture, fTexCoords).rgb 
+					+ (1.0f - shadow) * specular * texture(specularTexture, fTexCoords).rgb, 1.0f);
 	// Phong
-	vec3 color = (ambient + diffuse + specular) * texture(diffuseTexture, fTexCoords).rgb;
+	//vec3 color = (ambient + (1.0f- shadow) * (diffuse + specular)) * texture(diffuseTexture, fTexCoords).rgb;
 	vec3 auxColor = (ambient + diffuse + specular) * texture(diffuseTexture, fTexCoords).rgb;
 	for(int i = 0; i < NR_POINT_LIGHTS; i++){
          auxColor += computePointLight(pointLights[i]);

@@ -357,13 +357,11 @@ void processMovement() {
 	if (pressedKeys[GLFW_KEY_Q]) {
 		angleY -= 1.0f;
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 	}
 
 	if (pressedKeys[GLFW_KEY_E]) {
 		angleY += 1.0f;
 		model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 	}
 
 	if (pressedKeys[GLFW_KEY_W]) {
@@ -676,7 +674,16 @@ glm::mat4 computeLightSpaceTrMatrix() {
 }
 
 void drawObj(gps::Shader shader, bool depthPass) {
-	shader.useShaderProgram();
+	//model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(0, -1.5, 0));
+
+	if (!depthPass) {
+		normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
+
+		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+		glUniform1i(isSmokeyLoc, isSmokey);
+	}
 
 	if (openDoor) {
 		glm::mat4 doorModel = glm::mat4(1.0f);
@@ -684,7 +691,7 @@ void drawObj(gps::Shader shader, bool depthPass) {
 			glm::rotate(									// R
 				glm::translate(model, doorPos),				// T
 				glm::radians(60.0f), glm::vec3(0, 1.0f, 0)), -doorPos);
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(doorModel));
+		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(doorModel));
 		door.Draw(shader);
 	}
 
@@ -694,27 +701,15 @@ void drawObj(gps::Shader shader, bool depthPass) {
 			glm::rotate(										// R
 				glm::translate(model, cerealPos),				// T
 				glm::radians(90.0f), glm::vec3(1, 0, 0)), -cerealPos);
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cerealModel));
+		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(cerealModel));
 		cerealBox.Draw(shader);
 	}
 
-	//glViewport(0, 0, retina_width, retina_height);
-	skyBox.Draw(skyBoxShader, view, projection);
+	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-	shader.useShaderProgram();
-
-	//initialize the model matrix
-	model = glm::mat4(1.0f);
-	modelLoc = glGetUniformLocation(shader.shaderProgram, "model");
-
-	//send matrix data to vertex shader
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-	if (!depthPass) {
-		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-	}
-
-	glUniform1i(isSmokeyLoc, isSmokey);
+	walls.Draw(shader);
+	windows.Draw(shader);
+	plant.Draw(shader);
 
 	scene.Draw(shader);
 	halfWall.Draw(shader);
@@ -725,7 +720,6 @@ void drawObj(gps::Shader shader, bool depthPass) {
 	speakers.Draw(shader);
 	wallLights.Draw(shader);
 
-	walls.Draw(shader);
 	ground.Draw(shader);
 
 	if (!cerealSpilled) {
@@ -739,20 +733,60 @@ void drawObj(gps::Shader shader, bool depthPass) {
 		tvPlayer.pauseSong();
 	}
 
-	plant.Draw(shader);
-	windows.Draw(shader);
 
 	playerSphere.Draw(shader);
 
 }
 
 void renderScene() {
-	glClearColor(0.8, 0.8, 0.8, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//processMovement();
 
-	processMovement();
+
+// ----- generate the depth map
+	depthMapShader.useShaderProgram();
+
+	glUniformMatrix4fv(glGetUniformLocation(depthMapShader.shaderProgram, "lightSpaceTrMatrix"),
+		1,
+		GL_FALSE,
+		glm::value_ptr(computeLightSpaceTrMatrix()));
+
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	drawObj(depthMapShader, true);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+// ----- final rendering
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
+	skyBox.Draw(skyBoxShader, view, projection);
+	
+	sceneShader.useShaderProgram();
+
+	view = myCamera.getViewMatrix();
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+	lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+	glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
+
+	/*
+	//bind the shadow map
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+	glUniform1i(glGetUniformLocation(sceneShader.shaderProgram, "shadowMap"), 3);
+
+	glUniformMatrix4fv(glGetUniformLocation(sceneShader.shaderProgram, "lightSpaceTrMatrix"),
+		1,
+		GL_FALSE,
+		glm::value_ptr(computeLightSpaceTrMatrix()));
+	*/
 
 	drawObj(sceneShader, false);
+
 }
 
 void cleanup() {

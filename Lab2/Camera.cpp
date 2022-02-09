@@ -153,7 +153,7 @@ namespace gps {
         this->yawAngle = 0.0f;
         this->pitchAngle = 1.91f;
 
-        this->cameraPosition = glm::vec3(-7.0f, 2.0f, -5.0f);
+        this->cameraPosition = glm::vec3(-7.0f, 1.0f, -5.0f);
         this->cameraTarget = glm::vec3(7.0f, 2.0f, -5.0f);
         this->cameraUpDirection = glm::vec3(0.0f, 1.0f, 0.0f);
 
