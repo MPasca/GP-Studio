@@ -35,6 +35,12 @@ glm::mat3 normalMatrix;
 // light parameters
 glm::vec3 lightDir;
 glm::vec3 lightColor;
+glm::mat4 lightRotation;
+GLfloat lightAngle;
+
+// shadow
+GLuint shadowMapFBO;
+GLuint depthMapTexture;
 
 // tv light parameters
 bool isTVOn;
@@ -53,15 +59,32 @@ glm::vec3 doorPos = glm::vec3(3.51f, 1.16f, 3.15f);
 bool cerealSpilled;
 glm::vec3 cerealPos = glm::vec3(0.039f, 0.033f, -4.158f);
 
+// smoke/fog
+bool isSmokey;
+GLint isSmokeyLoc;
+
+// wall lights
+glm::vec3 wallLightsPositions[] = {
+	glm::vec3(4.3627f,  5.8728f,  3.39823f),
+	glm::vec3(3.78756f, 5.68063f, 2.98536f),
+	glm::vec3(4.75649f,  5.71798f, 2.96634f),
+	glm::vec3(4.4341f,  5.67128f, 2.72644f),
+	glm::vec3(3.75614, 5.58234, 2.30304),
+	glm::vec3(4.10425, 5.58855, 2.26019),
+	glm::vec3(4.53368, 5.61986, 1.93849),
+	glm::vec3(3.75809, 5.53615, 1.60692),
+	glm::vec3(4.24105, 5.45638, 1.63722),
+	glm::vec3(4.78422, 5.49807, 1.39514),
+	glm::vec3(4.54942, 5.33139, 1.01812),
+	glm::vec3(3.73847, 5.29568, 0.904004),
+	glm::vec3(4.22911, 5.37028, 0.42218)
+};
+
 // sound
 audio::MediaPlayer mediaPlayer = audio::MediaPlayer(irrklang::vec3df(-9.99f, -51.555f, 6.6016f));
 bool playSound;
 
 audio::MediaPlayer tvPlayer = audio::MediaPlayer(irrklang::vec3df(-3.088f, 1.14f, -2.725f));
-
-// shadow
-GLuint shadowMapFBO;
-GLuint depthMapTexture;
 
 const unsigned int SHADOW_WIDTH = 2048;
 const unsigned int SHADOW_HEIGHT = 2048;
@@ -110,6 +133,8 @@ gps::Model3D tv;
 gps::Model3D brickWall;
 gps::Model3D halfWall;
 
+gps::Model3D playerSphere;
+
 gps::Model3D speakers;
 gps::Model3D wallLights;
 
@@ -121,7 +146,7 @@ GLfloat angle;
 // shaders
 gps::Shader skyBoxShader;
 gps::Shader sceneShader;
-//gps::Shader lightShader;
+gps::Shader depthMapShader;
 
 // skybox
 gps::SkyBox skyBox;
@@ -194,6 +219,10 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 		else {
 			mediaPlayer.pauseSong();
 		}
+	}
+
+	if (key == GLFW_KEY_F && action == GLFW_PRESS) {
+		isSmokey = !isSmokey;
 	}
 
 	if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
@@ -453,7 +482,7 @@ void setWindowCallbacks() {
 }
 
 void initOpenGLState() {
-	glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
+	glClearColor(0.541f, 0.525f, 0.556f, 1.0f);
 
 	glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
 	ratio = myWindow.getWindowDimensions().width / myWindow.getWindowDimensions().height;
@@ -516,6 +545,9 @@ void initModels() {
 	windows.LoadModel("models/windows/windowPane.obj");
 
 	plant.LoadModel("models/plant/plant.obj");
+	plant.LoadModel("models/plant/hanging_plant.obj");
+
+	playerSphere.LoadModel("models/player.obj");
 	initScene();
 }
 
@@ -525,6 +557,15 @@ void initShaders() {
 	sceneShader.useShaderProgram();
 	//lightShader.loadShader("shaders/lightShader.vert", "shaders/lightShader.vert");
 	skyBoxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag"); // init the shader
+
+	depthMapShader.loadShader("shaders/depthShader.vert", "shaders/depthShader.frag");
+}
+
+void wallLightsUniforms() {
+	for (int i = 0; i < 13; i++) {
+		GLint pointLoc = glGetUniformLocation(sceneShader.shaderProgram, "pointLights[" + i + ']');
+		glUniform3fv(pointLoc, 1, glm::value_ptr(wallLightsPositions[i]));
+	}
 }
 
 void initUniforms() {
@@ -554,9 +595,10 @@ void initUniforms() {
 
 	//set the light direction (direction towards the light)
 	lightDir = glm::vec3(0.0f, 1.0f, 1.0f);
+	lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 	lightDirLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightDir");
 	// send light dir to shader
-	glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDir));
+	glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 
 	//set light color
 	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // white light
@@ -575,9 +617,13 @@ void initUniforms() {
 
 	isTVonLoc = glGetUniformLocation(sceneShader.shaderProgram, "isTVon");
 	glUniform1i(isTVonLoc, isTVOn);
+
+	isSmokeyLoc = glGetUniformLocation(sceneShader.shaderProgram, "isSmokey");
+	glUniform1i(isSmokeyLoc, isSmokey);
 }
 
 void initFBO() {
+	//generate FBO ID 
 	glGenFramebuffers(1, &shadowMapFBO);	// FBO ID
 
 	glGenTextures(1, &depthMapTexture);	// depth texture for FBO
@@ -629,14 +675,8 @@ glm::mat4 computeLightSpaceTrMatrix() {
 	return lightSpaceTrMatrix;
 }
 
-void renderScene() {
-
-	glClearColor(0.8, 0.8, 0.8, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	processMovement();
-
-	sceneShader.useShaderProgram();
+void drawObj(gps::Shader shader, bool depthPass) {
+	shader.useShaderProgram();
 
 	if (openDoor) {
 		glm::mat4 doorModel = glm::mat4(1.0f);
@@ -645,9 +685,9 @@ void renderScene() {
 				glm::translate(model, doorPos),				// T
 				glm::radians(60.0f), glm::vec3(0, 1.0f, 0)), -doorPos);
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(doorModel));
-		door.Draw(sceneShader);
+		door.Draw(shader);
 	}
-	
+
 	if (cerealSpilled) {
 		glm::mat4 cerealModel = glm::mat4(1.0f);
 		cerealModel = glm::translate(							// T-1
@@ -655,49 +695,64 @@ void renderScene() {
 				glm::translate(model, cerealPos),				// T
 				glm::radians(90.0f), glm::vec3(1, 0, 0)), -cerealPos);
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cerealModel));
-		cerealBox.Draw(sceneShader);
+		cerealBox.Draw(shader);
 	}
 
 	//glViewport(0, 0, retina_width, retina_height);
 	skyBox.Draw(skyBoxShader, view, projection);
 
-	sceneShader.useShaderProgram();
+	shader.useShaderProgram();
 
 	//initialize the model matrix
 	model = glm::mat4(1.0f);
-	modelLoc = glGetUniformLocation(sceneShader.shaderProgram, "model");
+	modelLoc = glGetUniformLocation(shader.shaderProgram, "model");
 
 	//send matrix data to vertex shader
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-	glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+	if (!depthPass) {
+		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+	}
 
-	windows.Draw(sceneShader);
+	glUniform1i(isSmokeyLoc, isSmokey);
 
-	scene.Draw(sceneShader);
-	halfWall.Draw(sceneShader);
-	brickWall.Draw(sceneShader);
-	
-	book.Draw(sceneShader);
+	scene.Draw(shader);
+	halfWall.Draw(shader);
+	brickWall.Draw(shader);
 
-	speakers.Draw(sceneShader);
-	wallLights.Draw(sceneShader);
-	
-	walls.Draw(sceneShader);
-	ground.Draw(sceneShader);
+	book.Draw(shader);
+
+	speakers.Draw(shader);
+	wallLights.Draw(shader);
+
+	walls.Draw(shader);
+	ground.Draw(shader);
 
 	if (!cerealSpilled) {
-		cerealBox.Draw(sceneShader);
+		cerealBox.Draw(shader);
 	}
 	if (!openDoor) {
-		door.Draw(sceneShader);
+		door.Draw(shader);
 	}
 	if (!isTVOn) {
-		tv.Draw(sceneShader);
+		tv.Draw(shader);
 		tvPlayer.pauseSong();
 	}
 
-	plant.Draw(sceneShader);
+	plant.Draw(shader);
+	windows.Draw(shader);
+
+	playerSphere.Draw(shader);
+
+}
+
+void renderScene() {
+	glClearColor(0.8, 0.8, 0.8, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	processMovement();
+
+	drawObj(sceneShader, false);
 }
 
 void cleanup() {
@@ -746,6 +801,7 @@ int main(int argc, const char* argv[]) {
 	openDoor = false;
 	cerealSpilled = false;
 	playSound = false;
+	isSmokey = false;
 
 	initMediaPlayer();
 	initSkybox();
@@ -755,6 +811,8 @@ int main(int argc, const char* argv[]) {
 	initUniforms();
 	setWindowCallbacks();
 
+	std::cout << "coords:" << myCamera.getCameraPosition().x << myCamera.getCameraPosition().y << myCamera.getCameraPosition().z << "\n";
+
 	glCheckError();
 
 	//myCamera.addBoundary(halfWall);
@@ -762,10 +820,14 @@ int main(int argc, const char* argv[]) {
 	//std::cout << "Min halfWall boundary: " << newBoundary.getMinCoord().x << newBoundary.getMinCoord().y << newBoundary.getMinCoord().z << "\n";
 	//std::cout << "Max halfWall boundary: " << newBoundary.getMaxCoord().x << newBoundary.getMaxCoord().y << newBoundary.getMaxCoord().z << "\n";
 
+
+
 	// application loop
 	while (!glfwWindowShouldClose(myWindow.getWindow())) {
 		processMovement();
 		renderScene();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		glfwPollEvents();
 		glfwSwapBuffers(myWindow.getWindow());

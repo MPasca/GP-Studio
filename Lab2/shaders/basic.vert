@@ -8,14 +8,10 @@ out vec3 fPosition;
 out vec3 fNormal;
 out vec2 fTexCoords;
 out vec4 fPosEye;
-out vec4 fragPosLightSpace;
-
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 lightSpaceTrMatrix;
-
 
 void main() 
 {
@@ -26,5 +22,4 @@ void main()
 	fTexCoords = vTexCoords;
 	fPosEye = view * model * vec4(vPosition, 1.0f);
 
-	fragPosLightSpace = lightSpaceTrMatrix * model * vec4(vPosition, 1.0f);
 }

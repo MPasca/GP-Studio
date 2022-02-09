@@ -8,7 +8,7 @@ namespace audio {
 
 		this->soundEngine = irrklang::createIrrKlangDevice();
 		if (this->soundEngine) {
-			this->soundEngine->setDefault3DSoundMinDistance(5.0f);
+			this->soundEngine->setDefault3DSoundMinDistance(15.0f);
 		}
 		this->currentSong = nullptr;
 	}
@@ -32,7 +32,9 @@ namespace audio {
 		for (std::string s : songs) {
 			if (index == crtSong) {
 				std::string stringFile = "./audios/" + s + ".mp3";
-				currentSong = soundEngine->play3D(stringFile.c_str(), position, false, false, true);
+				//currentSong = soundEngine->play3D(stringFile.c_str(), position, false, false, true);
+				currentSong = soundEngine->play2D(stringFile.c_str(), false, false, true);
+
 				std::cout << "current song: " << s.c_str() << '\n';
 				currentSong->setVolume(volume);
 			}
@@ -42,7 +44,7 @@ namespace audio {
 
 	void MediaPlayer::playSoundEffect(std::string audioFile) {
 		std::string stringFile = "./audios/effects/" + audioFile + ".mp3";
-		soundEngine->play3D(stringFile.c_str(), position, true, false, false);
+		soundEngine->play2D(stringFile.c_str(), true, false, false);
 		soundEngine->setSoundVolume(0.05f);
 	}
 

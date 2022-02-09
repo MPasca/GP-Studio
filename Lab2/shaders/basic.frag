@@ -40,13 +40,19 @@ uniform bool isTVon;
 uniform vec3 tvPos;
 uniform vec3 tvLightDir;
 
-float cutOff = 1.0f;
-float outerCutOff = 0.8f;
-float epsilon = 0.2f;
+// wallLights
+#define NR_POINT_LIGHTS 13 
+uniform vec3 pointLights[13];
+float pointAmbientStrength =  0.000001f;
+float pointSpecularStrength = 0.000002f;
+
+// smoke/fog/whatever
+uniform bool isSmokey;
+
+vec3 cameraPosEye = vec3(0.0f);	//in eye coordinates, the viewer is situated at the origin
 
 void computeLightComponents()
 {		
-	vec3 cameraPosEye = vec3(0.0f);	//in eye coordinates, the viewer is situated at the origin
 	
 	//transform normal
 	vec3 normalEye = normalize(fNormal);	
@@ -75,39 +81,35 @@ void computeLightComponents()
 	specular = att * specularStrength * specCoeff * lightColor;
 }
 
-/*
-vec3 computeTVIllum(){
-	vec3 cameraPosEye = vec3(0.0f);	// in eye coordinates, the viewer is situated at the origin
-	vec3 normalEye = normalize(fNormal);
+vec3 computePointLight(vec3 lightPointPos){
+	vec3 lightDir = normalize(lightPointPos - fPosition);
 
-	vec3 tvLightDirN = normalize(tvPos - (model * vec4(fPosition, 1.0f)).xyz);
-	vec3 tvDirN = normalize(tvPos.xyz - tvLightDir.xyz);
+    // diffuse shading
+    float diff = max(dot(fNormal, lightDir), 0.0);
 
-	float crtPoint = dot(tvLightDirN, normalize(tvLightDir));
-	vec3 crtVec = normalize(tvLightDirN + tvDirN);
+    // specular shading
+    vec3 reflectDir = reflect(-lightDir, fNormal);
+    float spec = pow(max(dot((cameraPosEye - fPosEye.xyz), reflectDir), 0.0), shininess);
 
-	float dist = length(tvPos - (model * vec4(fPosition, 1.0f)).xyz);
+	// attenuation
+    float distance = length(lightPointPos - fPosition);
+    float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));
 
-	float att = 1.0f / (constant + linear * dist + quadratic * (dist * dist));
-	
-	if(crtPoint > cutOff){
-		//	specCoeff = dotProd of the vertex between tvPos and current computed point
-		//					unless the dot product < 0 - in this case specCoeff is 0
-		//				^ shininess 
-		float specCoeff = pow(	max(	dot(normalize(fNormal) , crtVec), 0.0f), shininess);
+	vec3 ambientPoint  = pointAmbientStrength * attenuation * vec3(1.0f, 0.96f, 0.713f);
+    vec3 diffusePoint  = diff * attenuation * vec3(1.0f, 0.96f, 0.713f);
+    vec3 specularPoint = pointSpecularStrength * spec * attenuation * vec3(1.0f, 0.96f, 0.713f);
 
-		float lightIntensity = clamp((crtPoint - outerCutOff) / epsilon, 0.0f, 1.0f);
-
-		vec3 ambientColor = vec3(0.82f, 0.84f, 0.81f) * lightIntensity * att * ambientStrength * vec3(texture(diffuseTexture, fTexCoords));
-		vec3 diffuseColor = lightIntensity * att * max(dot(normalEye, tvLightDirN), 0.0f) * vec3(texture(diffuseTexture, fTexCoords));
-		vec3 specularColor = vec3(0.86f, 0.9f, 0.72f) * lightIntensity * att * specularStrength * specCoeff * vec3(texture(specularTexture, fTexCoords));
-	
-		return ambientColor + diffuseColor + specularColor;
-	}
-
-	return vec3(0.0f);
+    return (ambientPoint + diffusePoint + specularPoint);
 }
-*/
+
+float computeFog()
+{
+	float fogDensity = 0.08f;
+	float fragmentDistance = length(fPosEye);
+	float fogFactor = exp(-pow(fragmentDistance * fogDensity, 2));
+
+	return clamp(fogFactor, 0.0f, 1.0f);
+}
 
 float computeShadow()
 {
@@ -135,18 +137,31 @@ float computeShadow()
 void main() 
 {
 	vec4 colorFromTexture = texture(diffuseTexture, fTexCoords);
+	if(colorFromTexture.a < 0.1){
+		discard;
+	}
 
 	computeLightComponents();
-
-	vec3 baseColor = vec3(0.9f, 0.35f, 0.0f); //orange
 
     float shadow = computeShadow(); 
 	
 	//compute final vertex color (texture + light for now)
-	vec3 color = min((ambient + (1.0f - shadow) * diffuse) * texture(diffuseTexture, fTexCoords).rgb 
-					+ (1.0f - shadow) * specular * texture(specularTexture, fTexCoords).rgb, 1.0f);
-
+	//vec3 color = min((ambient + (1.0f - shadow) * diffuse) * texture(diffuseTexture, fTexCoords).rgb 
+	//				+ (1.0f - shadow) * specular * texture(specularTexture, fTexCoords).rgb, 1.0f);
+	// Phong
+	vec3 color = (ambient + diffuse + specular) * texture(diffuseTexture, fTexCoords).rgb;
+	vec3 auxColor = (ambient + diffuse + specular) * texture(diffuseTexture, fTexCoords).rgb;
+	for(int i = 0; i < NR_POINT_LIGHTS; i++){
+         auxColor += computePointLight(pointLights[i]);
+	}
 	//color += computeTVIllum();
 
-    fColor = vec4(color, colorFromTexture.a);
+	if(isSmokey){
+		float fogFactor = computeFog();
+		vec4 fogColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+		fColor = mix(fogColor, vec4(color, colorFromTexture.a), fogFactor);
+	}
+	else{
+		fColor = vec4(color, colorFromTexture.a);
+	}
 }
