@@ -30,6 +30,7 @@ namespace gps {
         float minY = -0.1f, maxY = 5.0f;
         float minZ = -5.96f, maxZ = 5.95f;
 
+        /*
         if (nextPos.x < minX || nextPos.x > maxX) {
             return false;
         }
@@ -48,6 +49,7 @@ namespace gps {
                 }
             }
         }
+        */
 
         return true;
     }

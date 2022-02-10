@@ -38,9 +38,12 @@ glm::vec3 lightColor;
 glm::mat4 lightRotation;
 GLfloat lightAngle;
 
+gps::Model3D lightCube;
+
 // shadow
 GLuint shadowMapFBO;
 GLuint depthMapTexture;
+bool showDepthMap;
 
 // tv light parameters
 bool isTVOn;
@@ -105,9 +108,9 @@ gps::Camera myCamera(
 	glm::vec3(0.0f, 1.0f, 0.0f));
 glm::vec3 cameraSize = glm::vec3(1.0f, 1.0f, 1.0f);
 
-GLfloat cameraSpeed = 0.1f;
-GLfloat ogSpeed = 0.05f;
-GLfloat SPEEDSpeed = 0.1f;
+GLfloat cameraSpeed = 0.3f;
+GLfloat ogSpeed = 0.1f;
+GLfloat SPEEDSpeed = 0.5f;
 
 // virtual tour
 // move/rotate	- direction	- value
@@ -133,6 +136,7 @@ gps::Model3D tv;
 gps::Model3D brickWall;
 gps::Model3D halfWall;
 
+gps::Model3D screenQuad;
 gps::Model3D playerSphere;
 
 gps::Model3D speakers;
@@ -147,6 +151,8 @@ GLfloat angle;
 gps::Shader skyBoxShader;
 gps::Shader sceneShader;
 gps::Shader depthMapShader;
+gps::Shader lightShader;
+gps::Shader screenQuadShader;
 
 // skybox
 gps::SkyBox skyBox;
@@ -198,6 +204,10 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
+
+	if (key == GLFW_KEY_M && action == GLFW_PRESS)
+		showDepthMap = !showDepthMap;
+
 
 	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
 		std::cout << "Come in!\n";
@@ -253,6 +263,7 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+
 	if (onTour) return;
 
 	float yaw, pitch;
@@ -271,7 +282,16 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 	myCamera.rotate(yaw, pitch);
 	view = myCamera.getViewMatrix();
+
+	//for (int i = 0; i < 4; i++) {
+	//	for (int j = 0; j < 4; j++) {
+	//		std::cout << view[i][j] << " ";
+	//	}
+	//	std::cout << "\n";
+	//}
+
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glCheckError();
 
 	prevY = ypos;
 	prevX = xpos;
@@ -368,6 +388,7 @@ void processMovement() {
 		myCamera.move(gps::MOVE_FORWARD, cameraSpeed);
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glCheckError();
 	}
 
 	if (pressedKeys[GLFW_KEY_S]) {
@@ -400,7 +421,11 @@ void processMovement() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	}
 
-	//std::cout << "light pos xyz:" << lightDir.x << " " << lightDir.y << " " << lightDir.z << "\n";
+	if (pressedKeys[GLFW_KEY_B]) {
+		std::cout << "light pos xyz:" << lightDir.x << " " << lightDir.y << " " << lightDir.z << "\n";
+		std::cout << "camera pos xyz: " << myCamera.getCameraPosition().x << " " << myCamera.getCameraPosition().y << " " << myCamera.getCameraPosition().z << "\n";
+	}
+
 	if (pressedKeys[GLFW_KEY_KP_8]) {
 		lightDir.y -= cameraSpeed;
 		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
@@ -537,6 +562,7 @@ void initModels() {
 
 	brickWall.LoadModel("models/brickWalls/brickwalls.obj");
 	halfWall.LoadModel("models/brickWalls/bar.obj");
+	halfWall.LoadModel("models/brickWalls/table.obj");
 
 	tv.LoadModel("models/TV/TV3_cover.obj");
 
@@ -547,23 +573,39 @@ void initModels() {
 
 	playerSphere.LoadModel("models/player.obj");
 	initScene();
+
+	lightCube.LoadModel("models/cube/cube.obj");
+	screenQuad.LoadModel("models/quad/quad.obj");
+
 }
 
 void initShaders() {
 	sceneShader.loadShader("shaders/basic.vert", "shaders/basic.frag");
-	//sceneShader.loadShader("shaders/sceneShader.vert", "shaders/sceneShader.frag");
 	sceneShader.useShaderProgram();
-	//lightShader.loadShader("shaders/lightShader.vert", "shaders/lightShader.vert");
+	lightShader.loadShader("shaders/lightCube.vert", "shaders/lightCube.frag");
+	lightShader.useShaderProgram();
 	skyBoxShader.loadShader("shaders/skyboxShader.vert", "shaders/skyboxShader.frag"); // init the shader
+
+	screenQuadShader.loadShader("shaders/screenQuad.vert", "shaders/screenQuad.frag");
+	screenQuadShader.useShaderProgram();
 
 	depthMapShader.loadShader("shaders/depthShader.vert", "shaders/depthShader.frag");
 }
 
 void wallLightsUniforms() {
-	for (int i = 0; i < 13; i++) {
-		GLint pointLoc = glGetUniformLocation(sceneShader.shaderProgram, "pointLights[" + i + ']');
-		glUniform3fv(pointLoc, 1, glm::value_ptr(wallLightsPositions[i]));
-	}
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[0]"), 1, glm::value_ptr(wallLightsPositions[0]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[1]"), 1, glm::value_ptr(wallLightsPositions[1]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[2]"), 1, glm::value_ptr(wallLightsPositions[2]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[3]"), 1, glm::value_ptr(wallLightsPositions[3]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[4]"), 1, glm::value_ptr(wallLightsPositions[4]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[5]"), 1, glm::value_ptr(wallLightsPositions[5]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[6]"), 1, glm::value_ptr(wallLightsPositions[6]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[7]"), 1, glm::value_ptr(wallLightsPositions[7]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[8]"), 1, glm::value_ptr(wallLightsPositions[8]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[9]"), 1, glm::value_ptr(wallLightsPositions[9]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[10]"), 1, glm::value_ptr(wallLightsPositions[10]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[11]"), 1, glm::value_ptr(wallLightsPositions[11]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[12]"), 1, glm::value_ptr(wallLightsPositions[12]));
 }
 
 void initUniforms() {
@@ -578,6 +620,7 @@ void initUniforms() {
 	viewLoc = glGetUniformLocation(sceneShader.shaderProgram, "view");
 	// send view matrix to shader
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glCheckError();
 
 	// compute normal matrix for teapot
 	normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
@@ -586,18 +629,21 @@ void initUniforms() {
 	// create projection matrix
 	projection = glm::perspective(glm::radians(45.0f),
 		(float)myWindow.getWindowDimensions().width / (float)myWindow.getWindowDimensions().height,
-		0.1f, 20.0f);
+		0.1f, 100.0f);
 	projectionLoc = glGetUniformLocation(sceneShader.shaderProgram, "projection");
 	// send projection matrix to shader
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 	//set the light direction (direction towards the light)
-	lightDir = glm::vec3(0.0f, 1.0f, 1.0f);
+	// -8.49999 0.235001 0.137999 
+	lightDir = glm::vec3(-8.49999f, 0.235001f, 0.137999f);
+	//lightDir = glm::vec3(1, 1, 1);
 	lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 	lightDirLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightDir");
+	glCheckError();
 	// send light dir to shader
 	glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
-
+	glCheckError();
 	//set light color
 	lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // white light
 	lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
@@ -618,6 +664,12 @@ void initUniforms() {
 
 	isSmokeyLoc = glGetUniformLocation(sceneShader.shaderProgram, "isSmokey");
 	glUniform1i(isSmokeyLoc, isSmokey);
+
+	lightShader.useShaderProgram();
+	glUniformMatrix4fv(glGetUniformLocation(lightShader.shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	depthMapShader.useShaderProgram();
+	glUniformMatrix4fv(glGetUniformLocation(depthMapShader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 }
 
 void initFBO() {
@@ -666,22 +718,27 @@ void initFBO() {
 glm::mat4 computeLightSpaceTrMatrix() {
 	glm::mat4 lightView = glm::lookAt(lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	const GLfloat near_plane = 0.1f, far_plane = 5.0f;
-	glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, near_plane, far_plane);
+	const GLfloat near_plane = 0.1f, far_plane = 20.0f;
+	glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
 
 	glm::mat4 lightSpaceTrMatrix = lightProjection * lightView;
+
 	return lightSpaceTrMatrix;
 }
 
 void drawObj(gps::Shader shader, bool depthPass) {
+	shader.useShaderProgram();
+	glCheckError();
 	//model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::translate(model, glm::vec3(0, -1.5, 0));
+	glCheckError();
 
 	if (!depthPass) {
 		normalMatrix = glm::mat3(glm::inverseTranspose(view * model));
 
 		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+		glCheckError();
 		glUniform1i(isSmokeyLoc, isSmokey);
 	}
 
@@ -692,6 +749,7 @@ void drawObj(gps::Shader shader, bool depthPass) {
 				glm::translate(model, doorPos),				// T
 				glm::radians(60.0f), glm::vec3(0, 1.0f, 0)), -doorPos);
 		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(doorModel));
+		glCheckError();
 		door.Draw(shader);
 	}
 
@@ -702,15 +760,12 @@ void drawObj(gps::Shader shader, bool depthPass) {
 				glm::translate(model, cerealPos),				// T
 				glm::radians(90.0f), glm::vec3(1, 0, 0)), -cerealPos);
 		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(cerealModel));
+		glCheckError();
 		cerealBox.Draw(shader);
 	}
 
 	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-	walls.Draw(shader);
-	windows.Draw(shader);
-	plant.Draw(shader);
-
+	glCheckError();
 	scene.Draw(shader);
 	halfWall.Draw(shader);
 	brickWall.Draw(shader);
@@ -720,7 +775,13 @@ void drawObj(gps::Shader shader, bool depthPass) {
 	speakers.Draw(shader);
 	wallLights.Draw(shader);
 
+	walls.Draw(shader);
+
+	windows.Draw(shader);
+
 	ground.Draw(shader);
+
+	plant.Draw(shader);
 
 	if (!cerealSpilled) {
 		cerealBox.Draw(shader);
@@ -728,21 +789,9 @@ void drawObj(gps::Shader shader, bool depthPass) {
 	if (!openDoor) {
 		door.Draw(shader);
 	}
-	if (!isTVOn) {
-		tv.Draw(shader);
-		tvPlayer.pauseSong();
-	}
-
-
-	playerSphere.Draw(shader);
-
 }
 
 void renderScene() {
-	//processMovement();
-
-
-// ----- generate the depth map
 	depthMapShader.useShaderProgram();
 
 	glUniformMatrix4fv(glGetUniformLocation(depthMapShader.shaderProgram, "lightSpaceTrMatrix"),
@@ -758,38 +807,84 @@ void renderScene() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	// render depth map on screen - toggled with the M key
 
-// ----- final rendering
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
-	skyBox.Draw(skyBoxShader, view, projection);
-	
+	if (showDepthMap) {
+		glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		screenQuadShader.useShaderProgram();
+
+		//bind the depth map
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+		glUniform1i(glGetUniformLocation(screenQuadShader.shaderProgram, "depthMap"), 0);
+
+		glDisable(GL_DEPTH_TEST);
+		screenQuad.Draw(screenQuadShader);
+		glEnable(GL_DEPTH_TEST);
+	}
+	else {
+
+		// final scene rendering pass (with shadows)
+
+		glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		sceneShader.useShaderProgram();
+
+		view = myCamera.getViewMatrix();
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+		lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
+
+		//bind the shadow map
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, depthMapTexture);
+		glUniform1i(glGetUniformLocation(sceneShader.shaderProgram, "shadowMap"), 3);
+
+		glUniformMatrix4fv(glGetUniformLocation(sceneShader.shaderProgram, "lightSpaceTrMatrix"),
+			1,
+			GL_FALSE,
+			glm::value_ptr(computeLightSpaceTrMatrix()));
+
+		drawObj(sceneShader, false);
+
+		if (!isTVOn) {
+			tv.Draw(sceneShader);
+			tvPlayer.pauseSong();
+		}
+
+		playerSphere.Draw(sceneShader);
+
+		//draw a white cube around the light
+
+		lightShader.useShaderProgram();	
+
+		glUniformMatrix4fv(glGetUniformLocation(lightShader.shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+		model = lightRotation;
+		model = glm::translate(model, 1.0f * lightDir);
+		model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
+		glUniformMatrix4fv(glGetUniformLocation(lightShader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+		lightCube.Draw(lightShader);
+
+		skyBox.Draw(skyBoxShader, view, projection);
+
+	}
+
 	sceneShader.useShaderProgram();
-
-	view = myCamera.getViewMatrix();
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-	lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-	glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
-
-	/*
-	//bind the shadow map
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, depthMapTexture);
-	glUniform1i(glGetUniformLocation(sceneShader.shaderProgram, "shadowMap"), 3);
-
-	glUniformMatrix4fv(glGetUniformLocation(sceneShader.shaderProgram, "lightSpaceTrMatrix"),
-		1,
-		GL_FALSE,
-		glm::value_ptr(computeLightSpaceTrMatrix()));
-	*/
-
-	drawObj(sceneShader, false);
-
 }
 
 void cleanup() {
+	glDeleteTextures(1, &depthMapTexture);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDeleteFramebuffers(1, &shadowMapFBO);
+
 	myWindow.Delete();
 	//cleanup code for your own data
 }
@@ -801,15 +896,15 @@ void initSkybox() {
 	faces.push_back("textures/skybox/bottom.tga");	//	and stuff
 	faces.push_back("textures/skybox/back.tga");	//
 	faces.push_back("textures/skybox/front.tga");	//
-	skyBox.Load(faces);	// loads the faces
-	skyBoxShader.useShaderProgram();
+	skyBox.Load(faces);				 // loads the faces	
+	skyBoxShader.useShaderProgram();  
 	view = myCamera.getViewMatrix();	// camera view
 	glUniformMatrix4fv(glGetUniformLocation(skyBoxShader.shaderProgram, "view"), 1, GL_FALSE,
-		glm::value_ptr(view));
+		glm::value_ptr(view)); 
 
 	projection = glm::perspective(glm::radians(45.0f), ratio, 0.1f, 1000.0f);
 	glUniformMatrix4fv(glGetUniformLocation(skyBoxShader.shaderProgram, "projection"), 1, GL_FALSE,
-		glm::value_ptr(projection));
+		glm::value_ptr(projection)); 
 }
 
 void initMediaPlayer() {
@@ -836,29 +931,35 @@ int main(int argc, const char* argv[]) {
 	cerealSpilled = false;
 	playSound = false;
 	isSmokey = false;
-
-	initMediaPlayer();
-	initSkybox();
+	
 	initOpenGLState();
 	initModels();
 	initShaders();
-	initUniforms();
-	setWindowCallbacks();
+	initUniforms(); 
 
-	std::cout << "coords:" << myCamera.getCameraPosition().x << myCamera.getCameraPosition().y << myCamera.getCameraPosition().z << "\n";
+	initMediaPlayer();
+
+	initSkybox();
+	initFBO();
+	setWindowCallbacks();
 
 	glCheckError();
 
-	//myCamera.addBoundary(halfWall);
-	//gps::Boundary newBoundary = gps::Boundary(halfWall);
-	//std::cout << "Min halfWall boundary: " << newBoundary.getMinCoord().x << newBoundary.getMinCoord().y << newBoundary.getMinCoord().z << "\n";
-	//std::cout << "Max halfWall boundary: " << newBoundary.getMaxCoord().x << newBoundary.getMaxCoord().y << newBoundary.getMaxCoord().z << "\n";
+	glUniformMatrix4fv(glGetUniformLocation(depthMapShader.shaderProgram, "lightSpaceTrMatrix"),
+		1,
+		GL_FALSE,
+		glm::value_ptr(computeLightSpaceTrMatrix()));
 
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// application loop
 	while (!glfwWindowShouldClose(myWindow.getWindow())) {
 		processMovement();
+
 		renderScene();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -1,7 +1,7 @@
-# Blender MTL File: 'tv table.blend'
+# Blender MTL File: 'studio.blend'
 # Material Count: 1
 
-newmtl Table
+newmtl Table.001
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -12,4 +12,3 @@ d 1.000000
 illum 2
 map_Bump Table_normal.png
 map_Kd Table_baseColor.png
-map_Ns Table_roughness.png

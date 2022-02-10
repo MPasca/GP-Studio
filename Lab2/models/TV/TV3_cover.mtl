@@ -1,7 +1,7 @@
 # Blender MTL File: 'studio.blend'
 # Material Count: 1
 
-newmtl EEVEE_Glass_Shader
+newmtl EEVEE_Glass_Shader.002
 Ns 900.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.022695 0.022695 0.022695
