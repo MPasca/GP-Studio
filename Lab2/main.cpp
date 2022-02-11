@@ -45,6 +45,9 @@ GLuint shadowMapFBO;
 GLuint depthMapTexture;
 bool showDepthMap;
 
+glm::vec3 bookPos = glm::vec3(-3.0f, -1.0f, 0.02f);
+bool moveBook;
+
 // tv light parameters
 bool isTVOn;
 glm::vec3 tvPos;
@@ -65,6 +68,9 @@ glm::vec3 cerealPos = glm::vec3(0.039f, 0.033f, -4.158f);
 // smoke/fog
 bool isSmokey;
 GLint isSmokeyLoc;
+
+// day cycles
+bool isDay;
 
 // wall lights
 glm::vec3 wallLightsPositions[] = {
@@ -115,7 +121,7 @@ GLfloat SPEEDSpeed = 0.5f;
 // virtual tour
 // move/rotate	- direction	- value
 enum action { move, rotate };
-enum direction {forward, left, right};
+enum direction { forward, left, right };
 
 bool onTour;
 int tourStep = 0;
@@ -210,12 +216,16 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 
 
 	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
-		std::cout << "Come in!\n";
-		openDoor = !openDoor;
+		if (length(myCamera.getCameraPosition() - doorPos) <= 1.5f) {
+			openDoor = !openDoor;
+		}
 	}
 
 	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
-		isTVOn = !isTVOn;
+		if (length(myCamera.getCameraPosition() - tvPos) <= 10.0f) {
+			isTVOn = !isTVOn;
+		}
+
 		if (isTVOn) {
 			tvPlayer.playSoundEffect("tv_static");
 		}
@@ -223,12 +233,17 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
 		playSound = !playSound;
+
 		if (playSound) {
 			mediaPlayer.playSong();
 		}
 		else {
 			mediaPlayer.pauseSong();
 		}
+	}
+
+	if (key == GLFW_KEY_V && action == GLFW_PRESS) {
+		isDay = !isDay;
 	}
 
 	if (key == GLFW_KEY_F && action == GLFW_PRESS) {
@@ -249,6 +264,10 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 
 	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
 		mediaPlayer.nextSong();
+	}
+
+	if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
+		moveBook = !moveBook;
 	}
 
 	if (key >= 0 && key < 1024) {
@@ -296,8 +315,13 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	prevY = ypos;
 	prevX = xpos;
 
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-		cerealSpilled = !cerealSpilled;
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+		moveBook = !moveBook;
+
+		if (length(myCamera.getCameraPosition() - cerealPos) <= 1.5f) {
+			cerealSpilled = !cerealSpilled;
+		}
 	}
 }
 
@@ -321,9 +345,9 @@ void processMovement() {
 			myCamera.rotate(0.01f, 0.0f);
 			movementPoints--;
 			break;
-		
+
 		case 2:
-			if(movementPoints <= 0){
+			if (movementPoints <= 0) {
 				tourStep++;
 				movementPoints = 500;
 				//onTour = false;
@@ -424,36 +448,37 @@ void processMovement() {
 	if (pressedKeys[GLFW_KEY_B]) {
 		std::cout << "light pos xyz:" << lightDir.x << " " << lightDir.y << " " << lightDir.z << "\n";
 		std::cout << "camera pos xyz: " << myCamera.getCameraPosition().x << " " << myCamera.getCameraPosition().y << " " << myCamera.getCameraPosition().z << "\n";
+		std::cout << "light angle: " << lightAngle;
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_8]) {
 		lightDir.y -= cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_5]) {
 		lightDir.y += cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_4]) {
 		lightDir.x -= cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_6]) {
 		lightDir.x += cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_1]) {
 		lightDir.z -= cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_3]) {
 		lightDir.z += cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 	}
 
 	// viewing modes
@@ -546,14 +571,14 @@ void initScene() {
 	scene.LoadModel("models/TV/TV4.obj");
 	scene.LoadModel("models/TV/TV5.obj");
 	scene.LoadModel("models/TV/TV6.obj");
-	
+
 	scene.LoadModel("models/bathroom_door/entrance_door.obj");
 
 	walls.LoadModel("models/walls/walls.obj");
 }
 
 void initModels() {
-	windows.LoadModel("models/windows/windowGlass.obj");
+	//windows.LoadModel("models/windows/windowGlass.obj");
 
 	door.LoadModel("models/bathroom_door/bathroom_door.obj");
 	cerealBox.LoadModel("models/cereal_box/cereal_box.obj");
@@ -592,22 +617,6 @@ void initShaders() {
 	screenQuadShader.useShaderProgram();
 
 	depthMapShader.loadShader("shaders/depthShader.vert", "shaders/depthShader.frag");
-}
-
-void wallLightsUniforms() {
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[0]"), 1, glm::value_ptr(wallLightsPositions[0]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[1]"), 1, glm::value_ptr(wallLightsPositions[1]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[2]"), 1, glm::value_ptr(wallLightsPositions[2]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[3]"), 1, glm::value_ptr(wallLightsPositions[3]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[4]"), 1, glm::value_ptr(wallLightsPositions[4]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[5]"), 1, glm::value_ptr(wallLightsPositions[5]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[6]"), 1, glm::value_ptr(wallLightsPositions[6]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[7]"), 1, glm::value_ptr(wallLightsPositions[7]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[8]"), 1, glm::value_ptr(wallLightsPositions[8]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[9]"), 1, glm::value_ptr(wallLightsPositions[9]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[10]"), 1, glm::value_ptr(wallLightsPositions[10]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[11]"), 1, glm::value_ptr(wallLightsPositions[11]));
-	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[12]"), 1, glm::value_ptr(wallLightsPositions[12]));
 }
 
 void initUniforms() {
@@ -656,12 +665,6 @@ void initUniforms() {
 
 	// tv light uniforms
 	tvPos = glm::vec3(-3.0f, 1.1f, 3.0f);
-	tvPosLoc = glGetUniformLocation(sceneShader.shaderProgram, "tvPos");
-	glUniform3fv(tvPosLoc, 1, glm::value_ptr(tvPos));
-
-	tvLightDir = glm::vec3(-1.0f, 0.0f, 0.0f);
-	tvLightDirLoc = glGetUniformLocation(sceneShader.shaderProgram, "tvLightDir");
-	glUniform3fv(tvLightDirLoc, 1, glm::value_ptr(tvLightDir));
 
 	isTVonLoc = glGetUniformLocation(sceneShader.shaderProgram, "isTVon");
 	glUniform1i(isTVonLoc, isTVOn);
@@ -719,16 +722,70 @@ void initFBO() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void wallLightsUniforms() {
+	view = myCamera.getViewMatrix();
+
+	model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(0, -1.5, 0));
+
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[0]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[0]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[1]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[1]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[2]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[2]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[3]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[3]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[4]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[4]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[5]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[5]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[6]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[6]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[7]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[7]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[8]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[8]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[9]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[9]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[10]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[10]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[11]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[11]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[12]"), 1, glm::value_ptr(glm::mat3(view * model) * wallLightsPositions[12]));
+
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[0]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[0]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[1]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[1]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[2]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[2]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[3]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[3]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[4]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[4]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[5]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[5]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[6]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[6]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[7]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[7]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[8]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[8]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[9]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[9]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[10]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[10]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[11]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[11]));
+	//glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[12]"), 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * wallLightsPositions[12]));
+
+
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[0]"), 1, glm::value_ptr(wallLightsPositions[0]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[1]"), 1, glm::value_ptr(wallLightsPositions[1]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[2]"), 1, glm::value_ptr(wallLightsPositions[2]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[3]"), 1, glm::value_ptr(wallLightsPositions[3]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[4]"), 1, glm::value_ptr(wallLightsPositions[4]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[5]"), 1, glm::value_ptr(wallLightsPositions[5]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[6]"), 1, glm::value_ptr(wallLightsPositions[6]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[7]"), 1, glm::value_ptr(wallLightsPositions[7]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[8]"), 1, glm::value_ptr(wallLightsPositions[8]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[9]"), 1, glm::value_ptr(wallLightsPositions[9]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[10]"), 1, glm::value_ptr(wallLightsPositions[10]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[11]"), 1, glm::value_ptr(wallLightsPositions[11]));
+	glUniform3fv(glGetUniformLocation(sceneShader.shaderProgram, "pointLights[12]"), 1, glm::value_ptr(wallLightsPositions[12]));
+}
+
 glm::mat4 computeLightSpaceTrMatrix() {
-	lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+	lightAngle += glfwGetTime() * 0.0001f;
+
+	glm::mat4 locLightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 	glCheckError();
 	glm::mat4 lightView = glm::lookAt(glm::inverseTranspose(glm::mat3(lightRotation)) * lightDir, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glCheckError();
-	const GLfloat near_plane = 0.1f, far_plane = 30.0f;
-	glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
+	const GLfloat near_plane = 0.1f, far_plane = 40.0f;
+	glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, near_plane, far_plane);
 
 	glm::mat4 lightSpaceTrMatrix = lightProjection * lightView;
+
 	glCheckError();
+
 	return lightSpaceTrMatrix;
 }
 
@@ -745,6 +802,8 @@ void drawObj(gps::Shader shader, bool depthPass) {
 		glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 		glCheckError();
 		glUniform1i(isSmokeyLoc, isSmokey);
+		glUniform1i(isTVonLoc, isTVOn);
+		glUniform1i(glGetUniformLocation(sceneShader.shaderProgram, "isDay"), isDay);
 	}
 
 	if (openDoor) {
@@ -769,13 +828,34 @@ void drawObj(gps::Shader shader, bool depthPass) {
 		cerealBox.Draw(shader);
 	}
 
+	glm::mat4 playerModel = glm::mat4(1.0f);
+	playerModel = glm::translate(playerModel, myCamera.getCameraPosition());
+	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(playerModel));
+	playerSphere.Draw(shader);
+
+	if (moveBook) {
+		glm::mat4 bookModel = glm::mat4(1.0f);
+		bookModel = glm::translate(							// T-1
+			glm::rotate(										// R
+				glm::translate(model, bookPos),				// T
+				glm::radians(90.0f), glm::vec3(0, 0, -1)), -bookPos);
+		bookModel = glm::translate(bookModel, glm::vec3(1.0f, 1.0f, 1.0f));
+		//bookModel = glm::translate(bookModel, myCamera.getCameraPosition());
+
+
+		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(bookModel));
+		book.Draw(shader);
+	}
+	else {
+		glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		book.Draw(shader);
+	}
+
 	glUniformMatrix4fv(glGetUniformLocation(shader.shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
 	glCheckError();
 	scene.Draw(shader);
 	halfWall.Draw(shader);
 	brickWall.Draw(shader);
-
-	book.Draw(shader);
 
 	speakers.Draw(shader);
 	wallLights.Draw(shader);
@@ -871,11 +951,9 @@ void renderScene() {
 			tvPlayer.pauseSong();
 		}
 
-		playerSphere.Draw(sceneShader);
-
 		//draw a white cube around the light
 
-		lightShader.useShaderProgram();	
+		lightShader.useShaderProgram();
 
 		glUniformMatrix4fv(glGetUniformLocation(lightShader.shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
@@ -910,14 +988,14 @@ void initSkybox() {
 	faces.push_back("textures/skybox/back.tga");	//
 	faces.push_back("textures/skybox/front.tga");	//
 	skyBox.Load(faces);				 // loads the faces	
-	skyBoxShader.useShaderProgram();  
+	skyBoxShader.useShaderProgram();
 	view = myCamera.getViewMatrix();	// camera view
 	glUniformMatrix4fv(glGetUniformLocation(skyBoxShader.shaderProgram, "view"), 1, GL_FALSE,
-		glm::value_ptr(view)); 
+		glm::value_ptr(view));
 
 	projection = glm::perspective(glm::radians(45.0f), ratio, 0.1f, 1000.0f);
 	glUniformMatrix4fv(glGetUniformLocation(skyBoxShader.shaderProgram, "projection"), 1, GL_FALSE,
-		glm::value_ptr(projection)); 
+		glm::value_ptr(projection));
 }
 
 void initMediaPlayer() {
@@ -944,11 +1022,15 @@ int main(int argc, const char* argv[]) {
 	cerealSpilled = false;
 	playSound = false;
 	isSmokey = false;
-	
+
+	moveBook = false;
+
+	isDay = true;
+
 	initOpenGLState();
 	initModels();
 	initShaders();
-	initUniforms(); 
+	initUniforms();
 
 	initMediaPlayer();
 
@@ -973,15 +1055,10 @@ int main(int argc, const char* argv[]) {
 	while (!glfwWindowShouldClose(myWindow.getWindow())) {
 		processMovement();
 
-	lightAngle += glfwGetTime() * 0.0001f;
-	if ((int)lightAngle % 180 && (int)lightAngle % 2) {
-		lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // white light
-		lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
-	}
-	else if ((int)lightAngle % 180) {
-		lightColor = glm::vec3(0.0f, 0.0f, 0.0f); // dark light
-		lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
-	}
+		//if (lightAngle - 1 > 0) {
+		//	isDay = !isDay;
+		//	
+		//}
 
 		renderScene();
 

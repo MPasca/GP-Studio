@@ -30,7 +30,6 @@ namespace gps {
         float minY = -0.1f, maxY = 5.0f;
         float minZ = -5.96f, maxZ = 5.95f;
 
-        /*
         if (nextPos.x < minX || nextPos.x > maxX) {
             return false;
         }
@@ -49,7 +48,6 @@ namespace gps {
                 }
             }
         }
-        */
 
         return true;
     }
@@ -62,12 +60,20 @@ namespace gps {
                 cameraPosition -= speed * cameraRightDirection;
                 cameraTarget -= speed * cameraRightDirection;
             }
+            else {
+                cameraPosition += 0.1f * cameraRightDirection;
+                cameraTarget += 0.1f * cameraRightDirection;
+            }
             break;
 
         case MOVE_RIGHT:
             if (isBounded(cameraPosition + speed * cameraRightDirection)) {
                 cameraPosition += speed * cameraRightDirection;
                 cameraTarget += speed * cameraRightDirection;
+            }
+            else {
+                cameraPosition -= 0.1f * cameraRightDirection;
+                cameraTarget -= 0.1f * cameraRightDirection;
             }
             break;
 
@@ -76,12 +82,20 @@ namespace gps {
                 cameraPosition += speed * cameraFrontDirection;
                 cameraTarget += speed * cameraFrontDirection;
             }
+            else {
+                cameraPosition -= 0.1f * cameraFrontDirection;
+                cameraTarget -= 0.1f * cameraFrontDirection;
+            }
             break;
 
         case MOVE_BACKWARD:
             if (isBounded(cameraPosition - speed * cameraFrontDirection)) {
                 cameraPosition -= speed * cameraFrontDirection;
                 cameraTarget -= speed * cameraFrontDirection;
+            }
+            else {
+                cameraPosition += 0.1f * cameraFrontDirection;
+                cameraTarget += 0.1f * cameraFrontDirection;
             }
             break;
 
@@ -90,12 +104,21 @@ namespace gps {
                 cameraPosition += speed * cameraUpDirection;
                 cameraTarget += speed * cameraUpDirection;
             }
+            else {
+                cameraPosition -= 0.1f * cameraUpDirection;
+                cameraTarget -= 0.1f * cameraUpDirection;
+            }
+
             break;
 
         case MOVE_DOWN:
             if (isBounded(cameraPosition + speed * cameraUpDirection)) {
                 cameraPosition -= speed * cameraUpDirection;
                 cameraTarget -= speed * cameraUpDirection;
+            }
+            else {
+                cameraPosition += 0.1f * cameraUpDirection;
+                cameraTarget += 0.1f * cameraUpDirection;
             }
             break;
         }
@@ -128,6 +151,10 @@ namespace gps {
 
     glm::vec3 Camera::getCameraPosition() {
         return cameraPosition;
+    }
+
+    glm::vec3 Camera::getCameraTarget() {
+        return cameraTarget;
     }
 
     glm::vec3 Camera::getCameraDirection() {
