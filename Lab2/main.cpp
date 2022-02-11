@@ -428,32 +428,32 @@ void processMovement() {
 
 	if (pressedKeys[GLFW_KEY_KP_8]) {
 		lightDir.y -= cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_5]) {
 		lightDir.y += cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_4]) {
 		lightDir.x -= cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_6]) {
 		lightDir.x += cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_1]) {
 		lightDir.z -= cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
 	}
 
 	if (pressedKeys[GLFW_KEY_KP_3]) {
 		lightDir.z += cameraSpeed;
-		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view)) * lightDir));
+		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view* lightRotation))* lightDir));
 	}
 
 	// viewing modes
@@ -481,9 +481,11 @@ void processMovement() {
 	// sit on couch
 	// -7.12275 1.55587 -3.20282  
 	if (pressedKeys[GLFW_KEY_C]) {
-		myCamera.setCameraPosition(glm::vec3(-7.123f, 1.55f, -3.20f));
-		myCamera.setCameraTarget(glm::vec3(-3.361f, 1.11f, -2.97f));
-		myCamera.setCameraDirection(glm::vec3(1, 0, 0));
+		myCamera.resetAngles();
+
+		myCamera.setCameraPosition(glm::vec3(-7.123f, 0.55f, -3.20f));
+		myCamera.setCameraTarget(glm::vec3(-3.361f, 0.11f, -2.97f));
+		myCamera.setCameraDirection(glm::vec3(0, -1, 0));
 		view = myCamera.getViewMatrix();
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -635,9 +637,11 @@ void initUniforms() {
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 	//set the light direction (direction towards the light)
-	// -8.49999 0.235001 0.137999 
-	lightDir = glm::vec3(-8.49999f, 0.235001f, 0.137999f);
-	//lightDir = glm::vec3(1, 1, 1);
+	// -8.49999f, 0.235001f, 0.137999f
+	// -17.6f, 0.835001f, -0.062001f
+	// -8.19999f, -0.064999f, -0.062001f
+	lightDir = glm::vec3(-17.6f, 0.835001f, -0.062001f);
+
 	lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
 	lightDirLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightDir");
 	glCheckError();
@@ -716,19 +720,20 @@ void initFBO() {
 }
 
 glm::mat4 computeLightSpaceTrMatrix() {
-	glm::mat4 lightView = glm::lookAt(lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-	const GLfloat near_plane = 0.1f, far_plane = 20.0f;
+	lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+	glCheckError();
+	glm::mat4 lightView = glm::lookAt(glm::inverseTranspose(glm::mat3(lightRotation)) * lightDir, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glCheckError();
+	const GLfloat near_plane = 0.1f, far_plane = 30.0f;
 	glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
 
 	glm::mat4 lightSpaceTrMatrix = lightProjection * lightView;
-
+	glCheckError();
 	return lightSpaceTrMatrix;
 }
 
 void drawObj(gps::Shader shader, bool depthPass) {
 	shader.useShaderProgram();
-	glCheckError();
 	//model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::rotate(glm::mat4(1.0f), glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::translate(model, glm::vec3(0, -1.5, 0));
@@ -792,12 +797,16 @@ void drawObj(gps::Shader shader, bool depthPass) {
 }
 
 void renderScene() {
+	//glCullFace(GL_FRONT);
+
 	depthMapShader.useShaderProgram();
 
 	glUniformMatrix4fv(glGetUniformLocation(depthMapShader.shaderProgram, "lightSpaceTrMatrix"),
 		1,
 		GL_FALSE,
 		glm::value_ptr(computeLightSpaceTrMatrix()));
+	glCheckError();
+
 
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
@@ -807,7 +816,10 @@ void renderScene() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	//glCullFace(GL_BACK);
+
 	// render depth map on screen - toggled with the M key
+	// to solve: invalid operation when moving the light in showDepthMap mode
 
 	if (showDepthMap) {
 		glViewport(0, 0, myWindow.getWindowDimensions().width, myWindow.getWindowDimensions().height);
@@ -839,6 +851,7 @@ void renderScene() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 		lightRotation = glm::rotate(glm::mat4(1.0f), glm::radians(lightAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+
 		glUniform3fv(lightDirLoc, 1, glm::value_ptr(glm::inverseTranspose(glm::mat3(view * lightRotation)) * lightDir));
 
 		//bind the shadow map
@@ -875,9 +888,9 @@ void renderScene() {
 
 		skyBox.Draw(skyBoxShader, view, projection);
 
-	}
+		sceneShader.useShaderProgram();
 
-	sceneShader.useShaderProgram();
+	}
 }
 
 void cleanup() {
@@ -959,6 +972,16 @@ int main(int argc, const char* argv[]) {
 	// application loop
 	while (!glfwWindowShouldClose(myWindow.getWindow())) {
 		processMovement();
+
+	lightAngle += glfwGetTime() * 0.0001f;
+	if ((int)lightAngle % 180 && (int)lightAngle % 2) {
+		lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // white light
+		lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
+	}
+	else if ((int)lightAngle % 180) {
+		lightColor = glm::vec3(0.0f, 0.0f, 0.0f); // dark light
+		lightColorLoc = glGetUniformLocation(sceneShader.shaderProgram, "lightColor");
+	}
 
 		renderScene();
 

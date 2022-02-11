@@ -163,6 +163,11 @@ namespace gps {
         this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
     }
 
+    void Camera::resetAngles() {
+        this->yawAngle = 0.0f;
+        this->pitchAngle = 0.0f;
+    }
+
     void Camera::addBoundary(gps::Model3D newBoundary) {
         boundaries.push_back(newBoundary);
     }

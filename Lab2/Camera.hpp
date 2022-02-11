@@ -33,6 +33,7 @@ namespace gps {
         glm::vec3 getCameraUp();
 
         void resetCamera();
+        void resetAngles();
         
         void setCameraDirection(glm::vec3 newDir);
         void setCameraPosition(glm::vec3 newPos);

@@ -128,17 +128,25 @@ float computeShadow()
 		return 0.0f;
 	}
 	
-	// Get closest depth value from light's perspective 
-    float closestDepth = texture(shadowMap, normalizedCoords.xy).r; 
-	
 	// Get depth of current fragment from light's perspective 
     float currentDepth = normalizedCoords.z; 
 	
 	// Check whether current frag pos is in shadow 
-	float bias = 0.00006f;
-    float shadow = currentDepth - bias> closestDepth  ? 1.0f : 0.0f; 
+	float bias = 0.001f;
+	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+
+	float shadow = 0.0f;
+
+	for (int x = 0; x <= 3; x++){
+		for (int y = 0; y <= 3; y++){
+			// Get closest depth value from light's perspective 
+    		float closestDepth = texture(shadowMap, normalizedCoords.xy + vec2(x, y) * texelSize).r; 
+			shadow += currentDepth - bias > closestDepth  ? 1.0f : 0.0f; 
+
+		}
+	}
 	
-	return shadow;
+	return shadow/16.0f;
 }
 
 float computeFog()
