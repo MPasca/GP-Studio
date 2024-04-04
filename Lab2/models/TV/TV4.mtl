@@ -1,7 +1,7 @@
 # Blender MTL File: 'studio.blend'
 # Material Count: 7
 
-newmtl Mat_plastic.left_lrg
+newmtl Mat_plastic.left_lrg.001
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -12,7 +12,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details II.png
 
-newmtl Mat_plastic.right_leg
+newmtl Mat_plastic.right_leg.001
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -23,7 +23,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details II.png
 
-newmtl Mat_plastic.speaker_cover
+newmtl Mat_plastic.speaker_cover.001
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -34,7 +34,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details II.png
 
-newmtl Mat_wood_maskl_left
+newmtl Mat_wood_maskl_left.001
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -45,7 +45,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details II.png
 
-newmtl Mat_wood_maskl_right
+newmtl Mat_wood_maskl_right.001
 Ns 768.987685
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -56,7 +56,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details II.png
 
-newmtl Material-MASKA-przycisków
+newmtl Material-MASKA-przycisków.001
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -67,7 +67,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details II.png
 
-newmtl Rubber_02
+newmtl Rubber_02.001
 Ns 0.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000

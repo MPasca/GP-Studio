@@ -30,7 +30,6 @@ namespace gps {
         float minY = -0.1f, maxY = 5.0f;
         float minZ = -5.96f, maxZ = 5.95f;
 
-        std::cout << "xyz: " << nextPos.x << " " << nextPos.y << " " << nextPos.z << "\n";
         if (nextPos.x < minX || nextPos.x > maxX) {
             return false;
         }
@@ -41,14 +40,15 @@ namespace gps {
             return false;
         }
 
-        /*
-        for (gps::Boundary crtBoundary : boundaries) {
-            if (crtBoundary.collisionDetection(nextPos)) {
-                std::cout << "Oh no, our door, is closed" << "\n";
-                return false;
+
+        for (gps::Model3D crtBoundary : boundaries) {
+            for (gps::Mesh crtMesh : crtBoundary.getMeshes()) {
+                if (crtMesh.checkCollision(nextPos)) {
+                    return false;
+                }
             }
         }
-        */
+
         return true;
     }
 
@@ -60,12 +60,20 @@ namespace gps {
                 cameraPosition -= speed * cameraRightDirection;
                 cameraTarget -= speed * cameraRightDirection;
             }
+            else {
+                cameraPosition += 0.1f * cameraRightDirection;
+                cameraTarget += 0.1f * cameraRightDirection;
+            }
             break;
 
         case MOVE_RIGHT:
             if (isBounded(cameraPosition + speed * cameraRightDirection)) {
                 cameraPosition += speed * cameraRightDirection;
                 cameraTarget += speed * cameraRightDirection;
+            }
+            else {
+                cameraPosition -= 0.1f * cameraRightDirection;
+                cameraTarget -= 0.1f * cameraRightDirection;
             }
             break;
 
@@ -74,12 +82,20 @@ namespace gps {
                 cameraPosition += speed * cameraFrontDirection;
                 cameraTarget += speed * cameraFrontDirection;
             }
+            else {
+                cameraPosition -= 0.1f * cameraFrontDirection;
+                cameraTarget -= 0.1f * cameraFrontDirection;
+            }
             break;
 
         case MOVE_BACKWARD:
             if (isBounded(cameraPosition - speed * cameraFrontDirection)) {
                 cameraPosition -= speed * cameraFrontDirection;
                 cameraTarget -= speed * cameraFrontDirection;
+            }
+            else {
+                cameraPosition += 0.1f * cameraFrontDirection;
+                cameraTarget += 0.1f * cameraFrontDirection;
             }
             break;
 
@@ -88,6 +104,11 @@ namespace gps {
                 cameraPosition += speed * cameraUpDirection;
                 cameraTarget += speed * cameraUpDirection;
             }
+            else {
+                cameraPosition -= 0.1f * cameraUpDirection;
+                cameraTarget -= 0.1f * cameraUpDirection;
+            }
+
             break;
 
         case MOVE_DOWN:
@@ -95,15 +116,19 @@ namespace gps {
                 cameraPosition -= speed * cameraUpDirection;
                 cameraTarget -= speed * cameraUpDirection;
             }
+            else {
+                cameraPosition += 0.1f * cameraUpDirection;
+                cameraTarget += 0.1f * cameraUpDirection;
+            }
             break;
         }
         this->cameraFrontDirection = normalize(cameraTarget - cameraPosition);
         this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
     }
 
-    //update the camera internal parameters following a camera rotate event
-    //yaw - camera rotation around the y axis
-    //pitch - camera rotation around the x axis
+    // update the camera internal parameters following a camera rotate event
+    // yaw - camera rotation around the y axis
+    // pitch - camera rotation around the x axis
     void Camera::rotate(float pitch, float yaw) {
         //TODO
         yawAngle += yaw;
@@ -126,6 +151,10 @@ namespace gps {
 
     glm::vec3 Camera::getCameraPosition() {
         return cameraPosition;
+    }
+
+    glm::vec3 Camera::getCameraTarget() {
+        return cameraTarget;
     }
 
     glm::vec3 Camera::getCameraDirection() {
@@ -153,7 +182,7 @@ namespace gps {
         this->yawAngle = 0.0f;
         this->pitchAngle = 1.91f;
 
-        this->cameraPosition = glm::vec3(-7.0f, 2.0f, -5.0f);
+        this->cameraPosition = glm::vec3(-7.0f, 1.0f, -5.0f);
         this->cameraTarget = glm::vec3(7.0f, 2.0f, -5.0f);
         this->cameraUpDirection = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -161,9 +190,12 @@ namespace gps {
         this->cameraRightDirection = normalize(cross(cameraFrontDirection, cameraUpDirection));
     }
 
-    void Camera::addBoundary(gps::Boundary newBoundary) {
-        std::cout << "Ding dong, new boundary\n";
+    void Camera::resetAngles() {
+        this->yawAngle = 0.0f;
+        this->pitchAngle = 0.0f;
+    }
+
+    void Camera::addBoundary(gps::Model3D newBoundary) {
         boundaries.push_back(newBoundary);
-        std::cout << "Aww yee, did done\n";
     }
 }

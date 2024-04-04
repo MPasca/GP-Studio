@@ -44,6 +44,7 @@ namespace gps {
 	void Mesh::setupMesh(){
 		// Create buffers/arrays
 		glGenVertexArrays(1, &this->buffers.VAO);
+
 		glGenBuffers(1, &this->buffers.VBO);
 		glGenBuffers(1, &this->buffers.EBO);
 
@@ -67,5 +68,19 @@ namespace gps {
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, TexCoords));
 
 		glBindVertexArray(0);
+	}
+
+	bool Mesh::checkCollision(glm::vec3 coordinates) {
+		for (gps::Vertex vert : vertices) {
+			if (abs(coordinates.x - vert.Position.x) < 0.05f) {
+				if (abs(coordinates.y - vert.Position.y) < 0.05f) {
+					if (abs(coordinates.z - vert.Position.z) < 0.05f) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 }

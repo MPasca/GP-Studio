@@ -1,7 +1,7 @@
 # Blender MTL File: 'studio.blend'
 # Material Count: 16
 
-newmtl Mat,alu_slat_bott
+newmtl Mat,alu_slat_bott.002
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -12,7 +12,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat.name_inscription
+newmtl Mat.name_inscription.002
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -23,7 +23,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_alu_slat_top
+newmtl Mat_alu_slat_top.002
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -34,7 +34,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_metal_scratch_b,s,
+newmtl Mat_metal_scratch_b,s,.002
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -45,7 +45,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_metalscre._potentiometer_6
+newmtl Mat_metalscre._potentiometer_6.002
 Ns 639.847311
 Ka 0.047970 0.047970 0.047970
 Kd 0.800000 0.800000 0.800000
@@ -56,7 +56,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_metalscre.potentiometer_1
+newmtl Mat_metalscre.potentiometer_1.002
 Ns 225.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -67,7 +67,7 @@ d 1.000000
 illum 2
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic._knob_1
+newmtl Mat_plastic._knob_1.002
 Ns 571.756924
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -78,7 +78,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic._potentiometer_4
+newmtl Mat_plastic._potentiometer_4.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -89,7 +89,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic._potentiometer_6
+newmtl Mat_plastic._potentiometer_6.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -100,7 +100,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic.band_switch
+newmtl Mat_plastic.band_switch.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -111,7 +111,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic.knob_2
+newmtl Mat_plastic.knob_2.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -122,7 +122,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic.potentiometer2
+newmtl Mat_plastic.potentiometer2.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -133,7 +133,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic.potentiometer_1
+newmtl Mat_plastic.potentiometer_1.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -144,7 +144,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic.potentiometer_3
+newmtl Mat_plastic.potentiometer_3.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -155,7 +155,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic.potentiometer__5
+newmtl Mat_plastic.potentiometer__5.002
 Ns 157.877594
 Ka 0.214286 0.214286 0.214286
 Kd 0.009221 0.009221 0.009221
@@ -166,7 +166,7 @@ d 1.000000
 illum 3
 map_Kd Textures\\Tex.details 8000.png
 
-newmtl Mat_plastic.power_switch
+newmtl Mat_plastic.power_switch.002
 Ns 165.306149
 Ka 0.149351 0.149351 0.149351
 Kd 0.009221 0.009221 0.009221
